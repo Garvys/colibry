@@ -1,10 +1,10 @@
-from dash import Dash, html
+from dash import Dash, html, Input, Output
 from calibre.calibre import extract_catalog
 import dash_bootstrap_components as dbc
 from pathlib import Path
 from urllib.parse import quote as urlquote
 from flask import Flask, send_from_directory
-from typing import List
+from typing import List, Optional
 
 server = Flask(__name__)
 app = Dash(server=server, external_stylesheets=[dbc.themes.ZEPHYR])
@@ -29,10 +29,13 @@ def file_download_link(formats: List[str]):
     return html.A("Download", href=location)
 
 
-def display_library(row_size: int = 8):
+def display_library(search: Optional[str] = None, row_size: int = 8):
     calibre_metadata = extract_catalog(
         "/home/garvys/Documents/calibre-dashboard/assets/library"
     )
+
+    if search:
+        calibre_metadata = [e for e in calibre_metadata if search.lower() in e.title.lower()]
 
     rows = [[]]
 
@@ -81,14 +84,22 @@ def display_library(row_size: int = 8):
 
 navbar = dbc.NavbarSimple(
     brand="Calibre Dashboard",
-    children=[dbc.Button("Reload", color="info")],
+    children=[
+        dbc.Input(id="input", placeholder="Type something...", type="text"),
+        dbc.Button("Search", color="info")
+        ],
     brand_href="#",
     color="primary",
     dark=True,
 )
 
 
-app.layout = html.Div([navbar, *display_library()])
+app.layout = html.Div([navbar, html.Div(children=display_library(), id="output")])
+
+@app.callback(Output("output", "children"), [Input("input", "value")])
+def output_text(value):
+    print(value)
+    return display_library(value)
 
 if __name__ == "__main__":
     app.run(debug=True)
