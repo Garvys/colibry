@@ -1,0 +1,8 @@
+[project]
+name = "calibre-dashboard"
+version = "0.0.1"
+
+[tool.setuptools]
+py-modules = [
+    "calibre"
+]
