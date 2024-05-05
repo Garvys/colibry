@@ -3,7 +3,7 @@ from calibre.calibre import extract_catalog
 import dash_bootstrap_components as dbc
 from pathlib import Path
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(__name__, external_stylesheets=[dbc.themes.ZEPHYR])
 
 def display_library(row_size: int = 8):
     calibre_metadata = extract_catalog('/home/garvys/Documents/calibre-dashboard/assets/library')
@@ -29,19 +29,24 @@ def display_library(row_size: int = 8):
                             text,
                             className="card-text",
                         ),
+                        dbc.Button("Download", color="primary"),
                     ]
                 ),
             ],
+            # class_name="h-100"
             # style={"width": "18rem"},
+            # style={
+            #     "className": "h-100"
+            # }
         )
-        col = dbc.Col(card)
+        col = dbc.Col(card,)
 
         rows[-1].append(col)
 
         if len(rows[-1]) == row_size:
             rows.append([])
 
-    rows = [dbc.Row(row) for row in rows if row]
+    rows = [dbc.Row(row, align="center",) for row in rows if row]
 
     return rows
 
