@@ -2,8 +2,31 @@ from dash import Dash, html
 from calibre.calibre import extract_catalog
 import dash_bootstrap_components as dbc
 from pathlib import Path
+from urllib.parse import quote as urlquote
+from flask import Flask, send_from_directory
+from typing import List
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.ZEPHYR])
+server = Flask(__name__)
+app = Dash(server=server, external_stylesheets=[dbc.themes.ZEPHYR])
+
+
+@server.route("/download/<path:path>")
+def download(path):
+    """Serve a file from the upload directory."""
+    return send_from_directory(
+        "/home/garvys/Documents/calibre-dashboard/assets/library",
+        path,
+        as_attachment=True,
+    )
+
+
+def file_download_link(formats: List[str]):
+    """Create a Plotly Dash 'A' element that downloads a file from the app."""
+    p = Path(formats[0])
+    p = p.relative_to("/home/garvys/Documents/calibre-dashboard/assets/library")
+
+    location = "/download/{}".format(urlquote(str(p)))
+    return html.A("Download", href=location)
 
 
 def display_library(row_size: int = 8):
@@ -18,16 +41,13 @@ def display_library(row_size: int = 8):
             "/home/garvys/Documents/calibre-dashboard"
         )
 
-        text = f''
+        text = f""
         if entry.series:
             text += f"{entry.series}#{entry.series_index}"
 
         card = dbc.Card(
             [
-                dbc.CardImg(src=str(cover_path), top=True, style={
-                    # "height": "20vh",
-                    # "max-height": "70%"
-                }),
+                dbc.CardImg(src=str(cover_path), top=True),
                 dbc.CardBody(
                     [
                         html.H6(entry.title, className="card-title"),
@@ -35,17 +55,12 @@ def display_library(row_size: int = 8):
                             entry.authors,
                             className="card-subtitle",
                         ),
-                        html.P(text)
-                        # dbc.CardLink("Download", href="#"),
+                        html.P(text),
+                        file_download_link(entry.formats),
                     ]
                 ),
             ],
-            # class_name="h-100"
-            # style={"width": "18rem"},
-            # style={
-            #     "className": "h-100"
-            # }
-            className="p-2 m-2 rounded"
+            className="p-2 m-2 rounded",
         )
 
         rows[-1].append(card)
@@ -65,20 +80,8 @@ def display_library(row_size: int = 8):
 
 
 navbar = dbc.NavbarSimple(
-    # children=[
-    #     dbc.NavItem(dbc.NavLink("Page 1", href="#")),
-    #     dbc.DropdownMenu(
-    #         children=[
-    #             dbc.DropdownMenuItem("More pages", header=True),
-    #             dbc.DropdownMenuItem("Page 2", href="#"),
-    #             dbc.DropdownMenuItem("Page 3", href="#"),
-    #         ],
-    #         nav=True,
-    #         in_navbar=True,
-    #         label="More",
-    #     ),
-    # ],
     brand="Calibre Dashboard",
+    children=[dbc.Button("Reload", color="info")],
     brand_href="#",
     color="primary",
     dark=True,

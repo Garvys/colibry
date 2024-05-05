@@ -22,6 +22,7 @@ class CalibreMetadata(BaseModel):
     id: int
     languages: List[str]
     title: str
+    formats: List[str]
     series: Optional[str] = None
     series_index: Optional[float] = None
 
@@ -34,7 +35,7 @@ def extract_catalog(library_path: Path) -> List[CalibreMetadata]:
             str(library_path),
             "list",
             "--fields",
-            "cover,authors,title,languages,series,series_index",
+            "cover,authors,title,languages,series,series_index,formats",
             "--for-machine",
         ]
     )
