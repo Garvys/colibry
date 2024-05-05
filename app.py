@@ -18,21 +18,25 @@ def display_library(row_size: int = 8):
             "/home/garvys/Documents/calibre-dashboard"
         )
 
-        text = entry.title
+        text = f''
         if entry.series:
-            text += f" - {entry.series}#{entry.series_index}"
+            text += f"{entry.series}#{entry.series_index}"
 
         card = dbc.Card(
             [
-                dbc.CardImg(src=str(cover_path), top=True),
+                dbc.CardImg(src=str(cover_path), top=True, style={
+                    # "height": "20vh",
+                    # "max-height": "70%"
+                }),
                 dbc.CardBody(
                     [
-                        html.H4(entry.title, className="card-title"),
+                        html.H6(entry.title, className="card-title"),
                         html.P(
-                            text,
-                            className="card-text",
+                            entry.authors,
+                            className="card-subtitle",
                         ),
-                        dbc.Button("Download", color="primary"),
+                        html.P(text)
+                        # dbc.CardLink("Download", href="#"),
                     ]
                 ),
             ],
@@ -41,6 +45,7 @@ def display_library(row_size: int = 8):
             # style={
             #     "className": "h-100"
             # }
+            className="p-2 m-2 rounded"
         )
 
         rows[-1].append(card)
@@ -52,7 +57,7 @@ def display_library(row_size: int = 8):
 
     for row in rows:
         while len(row) < row_size:
-            row.append(dbc.Col())
+            row.append(dbc.Card(className="p-2 m-2 invisible"))
 
     rows = [dbc.CardGroup(row) for row in rows]
 
