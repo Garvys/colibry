@@ -8,11 +8,13 @@ import json
 class StrictBaseModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+
 def run_shell(cmd):
     res = subprocess.run(cmd, stdout=subprocess.PIPE)
     if res.returncode != 0:
         raise ValueError(f"Error while running cmd {cmd}: {res.stdout}")
     return res.stdout
+
 
 class CalibreMetadata(BaseModel):
     authors: str
@@ -23,16 +25,19 @@ class CalibreMetadata(BaseModel):
     series: Optional[str] = None
     series_index: Optional[float] = None
 
+
 def extract_catalog(library_path: Path) -> List[CalibreMetadata]:
-    res = run_shell([
-        "calibredb",
-        "--library-path",
-        str(library_path),
-        "list",
-        "--fields",
-        "cover,authors,title,languages,series,series_index",
-        "--for-machine"
-    ])
+    res = run_shell(
+        [
+            "calibredb",
+            "--library-path",
+            str(library_path),
+            "list",
+            "--fields",
+            "cover,authors,title,languages,series,series_index",
+            "--for-machine",
+        ]
+    )
     res = res.strip().decode("utf-8")
     res = json.loads(res)
 
@@ -40,5 +45,6 @@ def extract_catalog(library_path: Path) -> List[CalibreMetadata]:
 
     return m
 
+
 if __name__ == "__main__":
-    extract_catalog('/home/garvys/Documents/calibre-dashboard/library')
+    extract_catalog("/home/garvys/Documents/calibre-dashboard/library")

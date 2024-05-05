@@ -5,15 +5,18 @@ from pathlib import Path
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.ZEPHYR])
 
+
 def display_library(row_size: int = 8):
-    calibre_metadata = extract_catalog('/home/garvys/Documents/calibre-dashboard/assets/library')
+    calibre_metadata = extract_catalog(
+        "/home/garvys/Documents/calibre-dashboard/assets/library"
+    )
 
     rows = [[]]
 
-
     for entry in calibre_metadata:
-
-        cover_path = Path(entry.cover).relative_to("/home/garvys/Documents/calibre-dashboard")
+        cover_path = Path(entry.cover).relative_to(
+            "/home/garvys/Documents/calibre-dashboard"
+        )
 
         text = entry.title
         if entry.series:
@@ -39,16 +42,22 @@ def display_library(row_size: int = 8):
             #     "className": "h-100"
             # }
         )
-        col = dbc.Col(card,)
 
-        rows[-1].append(col)
+        rows[-1].append(card)
 
         if len(rows[-1]) == row_size:
             rows.append([])
 
-    rows = [dbc.Row(row, align="center",) for row in rows if row]
+    rows = [row for row in rows if row]
+
+    for row in rows:
+        while len(row) < row_size:
+            row.append(dbc.Col())
+
+    rows = [dbc.CardGroup(row) for row in rows]
 
     return rows
+
 
 navbar = dbc.NavbarSimple(
     # children=[
@@ -71,11 +80,7 @@ navbar = dbc.NavbarSimple(
 )
 
 
-app.layout = html.Div([
-    navbar,
-    *display_library()
-])
+app.layout = html.Div([navbar, *display_library()])
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
-
