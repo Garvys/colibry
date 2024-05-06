@@ -12,15 +12,7 @@ def run_shell(cmd):
     return res.stdout
 
 
-class CalibreLibraryMetadata(BaseModel):
-    authors: str
-    cover: str
-    id: int
-    languages: List[str]
-    title: str
-    formats: List[str]
-    series: Optional[str] = None
-    series_index: Optional[float] = None
+
 
 
 def extract_library_metadata(library_path: Path) -> List[CalibreLibraryMetadata]:
