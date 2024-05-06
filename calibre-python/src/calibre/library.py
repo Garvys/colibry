@@ -5,6 +5,7 @@ from typing import List, Optional
 import json
 from calibre.objects import BookMetadata, LibraryId
 from pydantic import TypeAdapter
+import epub
 
 
 def run_shell(cmd):
@@ -54,7 +55,7 @@ class Library:
     ) -> List[BookMetadata]:
         cmd = ["list", "--for-machine", "--fields", "all"]
         if limit is not None:
-            cmd += ["--limit", limit]
+            cmd += ["--limit", str(limit)]
         if sort_by is not None:
             cmd += ["--sort-by", sort_by]
         res = self._run_calibredb(cmd)
@@ -69,3 +70,14 @@ class Library:
 
     def remove_books(self, books: List[BookMetadata]):
         return self.remove_from_ids(ids=[e.id for e in books])
+    
+    def show_metadata(self, library_id: LibraryId) -> BookMetadata:
+        res =  self._run_calibredb(
+            [
+                "show_metadata", str(library_id), "--as-opf"
+            ]
+        )
+
+        print(res)
+
+        print(epub.opf.parse_opf(res.decode('utf-8')).metadata.titles)

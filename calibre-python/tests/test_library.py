@@ -4,11 +4,16 @@ from typing import List
 
 
 def test_new_add_list(tmp_path: Path, ebook_paths: List[Path]):
+    library = Library.new_empty_library(tmp_path / "library").add(ebooks=ebook_paths)
     books_metadata = (
-        Library.new_empty_library(tmp_path / "library").add(ebooks=ebook_paths).list()
+        library.list()
     )
 
     assert len(books_metadata) == len(ebook_paths)
+
+    books_metadata = library.list(limit=1)
+
+    assert len(books_metadata) == 1
 
 
 def test_remove_books(tmp_path: Path, ebook_paths: List[Path]):
@@ -38,3 +43,7 @@ def test_clone(tmp_path: Path, ebook_paths: List[Path]):
 
     assert len(library1.list()) == 0
     assert len(library2.list()) == len(ebook_paths)
+
+def test_show_metadata(tmp_path: Path, ebook_paths: List[Path]):
+    library = Library.new_empty_library(tmp_path / "library").add(ebook_paths[:1])
+    library.show_metadata(1)
