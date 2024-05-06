@@ -76,14 +76,14 @@ def display_library(library_path: Path, filters: SearchFilters, row_size: int = 
 
 layout = html.Div(
     [
-        dbc.Input(id="input", placeholder="Type something...", type="text"),
+        dbc.Input(id="text-search", placeholder="Type something...", type="text"),
         dbc.Button("Search", color="info"),
-        html.Div(children=[], id="output"),
+        html.Div(children=[], id="books-library"),
     ]
 )
 
 
-@callback(Output("output", "children"), [Input("input", "value")])
+@callback(Output("books-library", "children"), [Input("text-search", "value")])
 def output_text(value):
-    filters = SearchFilters(text=value)
+    filters = SearchFilters(text=value, series=None)
     return display_library(library_path=APP_CONFIG.library_path, filters=filters)

@@ -5,6 +5,7 @@ from typing import List, Optional
 
 class SearchFilters(StrictBaseModel):
     text: Optional[str]
+    series: Optional[str]
 
 
 def filter_library_metadata(
@@ -19,6 +20,10 @@ def filter_library_metadata(
                 normalized_text += entry.series
 
             if filters.text.lower() not in normalized_text.lower():
+                continue
+
+        if filters.series:
+            if entry.series != filters.series:
                 continue
 
         res.append(entry)
