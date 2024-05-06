@@ -29,3 +29,12 @@ def test_remove_from_ids(tmp_path: Path, ebook_paths: List[Path]):
     library.remove_from_ids([e.id for e in books_metadata][:2])
 
     assert len(library.list()) == len(ebook_paths) - 2
+
+
+def test_clone(tmp_path: Path, ebook_paths: List[Path]):
+    library1 = Library.new_empty_library(tmp_path / "library1")
+
+    library2 = library1.clone(tmp_path / "library2").add(ebook_paths)
+
+    assert len(library1.list()) == 0
+    assert len(library2.list()) == len(ebook_paths)

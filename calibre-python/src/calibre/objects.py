@@ -2,11 +2,11 @@ from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from pathlib import Path
 
-CalibreId = int
+LibraryId = int
 
 
 class BookMetadata(BaseModel):
-    id: CalibreId
+    id: LibraryId
     model_config = ConfigDict(extra="allow")
     authors: str
     cover: Optional[Path] = None

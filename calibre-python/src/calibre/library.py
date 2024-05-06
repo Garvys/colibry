@@ -1,9 +1,9 @@
 from __future__ import annotations
 from pathlib import Path
 import subprocess
-from typing import List
+from typing import List, Optional
 import json
-from calibre.objects import BookMetadata, CalibreId
+from calibre.objects import BookMetadata, LibraryId
 from pydantic import TypeAdapter
 
 
@@ -49,13 +49,20 @@ class Library:
 
         return self
 
-    def list(self) -> List[BookMetadata]:
-        res = self._run_calibredb(["list", "--for-machine", "--fields", "all"])
+    def list(
+        self, limit: Optional[int] = None, sort_by: Optional[str] = None
+    ) -> List[BookMetadata]:
+        cmd = ["list", "--for-machine", "--fields", "all"]
+        if limit is not None:
+            cmd += ["--limit", limit]
+        if sort_by is not None:
+            cmd += ["--sort-by", sort_by]
+        res = self._run_calibredb(cmd)
         return TypeAdapter(List[BookMetadata]).validate_python(
             json.loads(res.decode("utf-8"))
         )
 
-    def remove_from_ids(self, ids: List[CalibreId]) -> Library:
+    def remove_from_ids(self, ids: List[LibraryId]) -> Library:
         self._run_calibredb(["remove", ",".join([str(e) for e in ids])])
 
         return self
