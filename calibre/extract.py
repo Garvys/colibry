@@ -1,6 +1,6 @@
 import subprocess
 from pathlib import Path
-from pydantic import BaseModel, ConfigDict, TypeAdapter
+from pydantic import BaseModel, TypeAdapter
 from typing import List, Optional
 import json
 

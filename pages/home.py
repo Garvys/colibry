@@ -1,7 +1,7 @@
 import dash
 from dash import html, Input, Output, callback
 import dash_bootstrap_components as dbc
-from typing import Optional, List
+from typing import List
 from pathlib import Path
 from calibre.extract import extract_library_metadata
 from urllib.parse import quote as urlquote
@@ -17,7 +17,7 @@ def file_download_link(library_path: Path, formats: List[str]):
     p = Path(formats[0])
     p = p.relative_to(library_path)
 
-    location = "/download_from_library/{}".format(urlquote(str(p)))
+    location = "/download-from-library/{}".format(urlquote(str(p)))
     return html.A("Download", href=location)
 
 
@@ -32,13 +32,15 @@ def display_library(library_path: Path, filters: SearchFilters, row_size: int = 
     for entry in library_metadata:
         cover_path = Path(entry.cover).relative_to(library_path)
 
-        text = f""
+        text = ""
         if entry.series:
             text += f"{entry.series}#{entry.series_index}"
 
         card = dbc.Card(
             [
-                dbc.CardImg(src=str(cover_path), top=True),
+                dbc.CardImg(
+                    src=f"/download-from-library/{urlquote(str(cover_path))}", top=True
+                ),
                 dbc.CardBody(
                     [
                         html.H6(entry.title, className="card-title"),

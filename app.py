@@ -1,10 +1,5 @@
-from dash import Dash, html, Input, Output
-from calibre.extract import extract_library_metadata
-from pathlib import Path
-from urllib.parse import quote as urlquote
+from dash import Dash, html
 from flask import Flask, send_from_directory
-from typing import List, Optional
-from pydantic_settings import BaseSettings
 import dash_bootstrap_components as dbc
 import dash
 from app_config import APP_CONFIG

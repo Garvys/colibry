@@ -1,7 +1,6 @@
 from calibre.extract import CalibreLibraryMetadata
 from calibre.pydantic_utils import StrictBaseModel
 from typing import List, Optional
-from pydantic import BaseModel
 
 
 class SearchFilters(StrictBaseModel):
@@ -15,10 +14,11 @@ def filter_library_metadata(
 
     for entry in library:
         if filters.text:
-            if not (
-                filters.text.lower()
-                in entry.authors.lower() + entry.title.lower() + entry.series.lower()
-            ):
+            normalized_text = entry.authors + entry.title
+            if entry.series:
+                normalized_text += entry.series
+
+            if filters.text.lower() not in normalized_text.lower():
                 continue
 
         res.append(entry)
