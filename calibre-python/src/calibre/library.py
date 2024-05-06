@@ -3,7 +3,7 @@ from pathlib import Path
 import subprocess
 from typing import List
 import json
-from calibre.objects import BookMetadata
+from calibre.objects import BookMetadata, CalibreId
 from pydantic import TypeAdapter
 
 
@@ -15,55 +15,50 @@ def run_shell(cmd):
 
 
 class Library:
-
     def __init__(self, library_path: Path):
         if not library_path.exists():
             raise ValueError(f"Library not found : {library_path}")
         self.library_path = library_path
 
     def _run_calibredb(self, l: List[str]):
-        return run_shell([
-            "calibredb",
-            "--with-library",
-            str(self.library_path),
-            *l
-        ])
+        return run_shell(["calibredb", "--with-library", str(self.library_path), *l])
 
     @classmethod
     def new_empty_library(cls, new_library_path: Path) -> Library:
         path_empty_library = Path(__file__).resolve().parent / "empty_library"
 
-        run_shell([
-            "calibredb",
-            "--with-library",
-            str(path_empty_library),
-            "clone",
-            str(new_library_path)
-        ])
+        run_shell(
+            [
+                "calibredb",
+                "--with-library",
+                str(path_empty_library),
+                "clone",
+                str(new_library_path),
+            ]
+        )
 
         return cls(library_path=new_library_path)
 
-    
     def clone(self, new_library_path: Path) -> Library:
-        self._run_calibredb([
-            "clone", str(new_library_path)
-        ])
+        self._run_calibredb(["clone", str(new_library_path)])
 
         return Library(library_path=new_library_path)
-    
+
     def add(self, ebooks: List[Path]):
-        self._run_calibredb([
-            "add", *[str(p) for p in ebooks]
-        ])
+        self._run_calibredb(["add", *[str(p) for p in ebooks]])
 
         return self
-    
+
     def list(self) -> List[BookMetadata]:
-        res = self._run_calibredb(
-            ["list", "--for-machine", "--fields", "all"]
+        res = self._run_calibredb(["list", "--for-machine", "--fields", "all"])
+        return TypeAdapter(List[BookMetadata]).validate_python(
+            json.loads(res.decode("utf-8"))
         )
-        return TypeAdapter(List[BookMetadata]).validate_python(json.loads(res.decode("utf-8")))
 
-    
+    def remove_from_ids(self, ids: List[CalibreId]) -> Library:
+        self._run_calibredb(["remove", ",".join([str(e) for e in ids])])
 
+        return self
 
+    def remove_books(self, books: List[BookMetadata]):
+        return self.remove_from_ids(ids=[e.id for e in books])

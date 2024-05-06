@@ -12,9 +12,6 @@ def run_shell(cmd):
     return res.stdout
 
 
-
-
-
 def extract_library_metadata(library_path: Path) -> List[CalibreLibraryMetadata]:
     res = run_shell(
         [

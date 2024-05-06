@@ -2,6 +2,7 @@ from pytest import fixture
 from pathlib import Path
 from typing import List
 
+
 @fixture(scope="session")
 def data_folder() -> Path:
     return Path(__file__).resolve().parents[2] / "data"
