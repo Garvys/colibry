@@ -1,4 +1,4 @@
 dash
 pydantic
 dash-bootstrap-components
-dash-mantine-components
+pydantic-settings

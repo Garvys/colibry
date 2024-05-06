@@ -5,10 +5,6 @@ from typing import List, Optional
 import json
 
 
-class StrictBaseModel(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-
 def run_shell(cmd):
     res = subprocess.run(cmd, stdout=subprocess.PIPE)
     if res.returncode != 0:
@@ -16,7 +12,7 @@ def run_shell(cmd):
     return res.stdout
 
 
-class CalibreMetadata(BaseModel):
+class CalibreLibraryMetadata(BaseModel):
     authors: str
     cover: str
     id: int
@@ -27,7 +23,7 @@ class CalibreMetadata(BaseModel):
     series_index: Optional[float] = None
 
 
-def extract_catalog(library_path: Path) -> List[CalibreMetadata]:
+def extract_library_metadata(library_path: Path) -> List[CalibreLibraryMetadata]:
     res = run_shell(
         [
             "calibredb",
@@ -42,10 +38,4 @@ def extract_catalog(library_path: Path) -> List[CalibreMetadata]:
     res = res.strip().decode("utf-8")
     res = json.loads(res)
 
-    m = TypeAdapter(List[CalibreMetadata]).validate_python(res)
-
-    return m
-
-
-if __name__ == "__main__":
-    extract_catalog("/home/garvys/Documents/calibre-dashboard/library")
+    return TypeAdapter(List[CalibreLibraryMetadata]).validate_python(res)
