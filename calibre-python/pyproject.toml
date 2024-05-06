@@ -1,0 +1,23 @@
+[project]
+name = "calibre-python"
+version = "0.0.1"
+authors = [
+    {name = "Alexandre Caulier", email = "alexandre.caulier.a@gmail.com"},
+]
+dependencies = [
+  'pydantic > 2.0, < 3',
+]
+description = "TODO"
+readme = "README.md"
+keywords = ["calibre"]
+
+[project.optional-dependencies]
+test = [
+    "pytest > 8, < 9"
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+'calibre.empty_library' = ["*.db"]
