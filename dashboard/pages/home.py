@@ -1,5 +1,5 @@
 import dash
-from dash import html, Input, State, Output, callback
+from dash import html, Input, State, Output, callback, dcc
 import dash_bootstrap_components as dbc
 from typing import List
 from pathlib import Path
@@ -40,7 +40,10 @@ def display_library(library_path: Path, search: str = "", row_size: int = 8):
                 ),
                 dbc.CardBody(
                     [
-                        html.H6(entry.title, className="card-title"),
+                        dcc.Link(
+                            html.H6(entry.title, className="card-title"),
+                            href=f"/book/{entry.id}",
+                        ),
                         html.P(
                             entry.authors,
                             className="card-subtitle",

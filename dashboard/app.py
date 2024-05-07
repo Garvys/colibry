@@ -23,7 +23,7 @@ navbar = dbc.NavbarSimple(
     #     dbc.Input(id="input", placeholder="Type something...", type="text"),
     #     dbc.Button("Search", color="info")
     #     ],
-    brand_href="home",
+    brand_href="/home",
     color="primary",
     dark=True,
 )
