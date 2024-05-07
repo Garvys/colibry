@@ -1,12 +1,11 @@
 import dash
-from dash import html, Input, Output, callback
+from dash import html, Input, State, Output, callback
 import dash_bootstrap_components as dbc
 from typing import List
 from pathlib import Path
-from calibre.extract import extract_library_metadata
+from calibre.library import CalibreLibrary
 from urllib.parse import quote as urlquote
 from app_config import APP_CONFIG
-from calibre.filter import SearchFilters, filter_library_metadata
 
 
 dash.register_page(__name__)
@@ -21,15 +20,13 @@ def file_download_link(library_path: Path, formats: List[str]):
     return html.A("Download", href=location)
 
 
-def display_library(library_path: Path, filters: SearchFilters, row_size: int = 8):
-    library_metadata = extract_library_metadata(library_path=library_path)
-    library_metadata = filter_library_metadata(
-        library=library_metadata, filters=filters
-    )
+def display_library(library_path: Path, search: str = "", row_size: int = 8):
+    calibre_library = CalibreLibrary(APP_CONFIG.library_path)
+    books_metadata = calibre_library.list(search=search)
 
     rows = [[]]
 
-    for entry in library_metadata:
+    for entry in books_metadata:
         cover_path = Path(entry.cover).relative_to(library_path)
 
         text = ""
@@ -77,13 +74,16 @@ def display_library(library_path: Path, filters: SearchFilters, row_size: int = 
 layout = html.Div(
     [
         dbc.Input(id="text-search", placeholder="Type something...", type="text"),
-        dbc.Button("Search", color="info"),
+        dbc.Button("Search", color="info", id="search-button"),
         html.Div(children=[], id="books-library"),
     ]
 )
 
 
-@callback(Output("books-library", "children"), [Input("text-search", "value")])
-def output_text(value):
-    filters = SearchFilters(text=value, series=None)
-    return display_library(library_path=APP_CONFIG.library_path, filters=filters)
+@callback(
+    Output("books-library", "children"),
+    State("text-search", "value"),
+    Input("search-button", "n_clicks"),
+)
+def output_text(text_search: str, _n_clicks):
+    return display_library(library_path=APP_CONFIG.library_path, search=text_search)

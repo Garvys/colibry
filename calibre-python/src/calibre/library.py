@@ -15,7 +15,7 @@ def run_shell(cmd):
     return res.stdout
 
 
-class Library:
+class CalibreLibrary:
     def __init__(self, library_path: Path):
         if not library_path.exists():
             raise ValueError(f"Library not found : {library_path}")
@@ -25,7 +25,7 @@ class Library:
         return run_shell(["calibredb", "--with-library", str(self.library_path), *l])
 
     @classmethod
-    def new_empty_library(cls, new_library_path: Path) -> Library:
+    def new_empty_library(cls, new_library_path: Path) -> CalibreLibrary:
         path_empty_library = Path(__file__).resolve().parent / "empty_library"
 
         run_shell(
@@ -40,10 +40,10 @@ class Library:
 
         return cls(library_path=new_library_path)
 
-    def clone(self, new_library_path: Path) -> Library:
+    def clone(self, new_library_path: Path) -> CalibreLibrary:
         self._run_calibredb(["clone", str(new_library_path)])
 
-        return Library(library_path=new_library_path)
+        return CalibreLibrary(library_path=new_library_path)
 
     def add(self, ebooks: List[Path]):
         self._run_calibredb(["add", *[str(p) for p in ebooks]])
@@ -51,33 +51,46 @@ class Library:
         return self
 
     def list(
-        self, limit: Optional[int] = None, sort_by: Optional[str] = None
+        self,
+        limit: Optional[int] = None,
+        sort_by: Optional[str] = None,
+        ascending: bool = False,
+        search: str = "",
     ) -> List[BookMetadata]:
         cmd = ["list", "--for-machine", "--fields", "all"]
         if limit is not None:
             cmd += ["--limit", str(limit)]
         if sort_by is not None:
             cmd += ["--sort-by", sort_by]
+        if ascending:
+            cmd += ["--ascending"]
+        if search:
+            cmd += ["--search", search]
         res = self._run_calibredb(cmd)
         return TypeAdapter(List[BookMetadata]).validate_python(
             json.loads(res.decode("utf-8"))
         )
 
-    def remove_from_ids(self, ids: List[LibraryId]) -> Library:
+    def list_authors(self) -> List[str]:
+        res = self._run_calibredb(["list", "--for-machine", "--fields", "authors"])
+        books_metadata = TypeAdapter(List[BookMetadata]).validate_python(
+            json.loads(res.decode("utf-8"))
+        )
+        return [e.authors for e in books_metadata if e.authors]
+
+    def remove_from_ids(self, ids: List[LibraryId]) -> CalibreLibrary:
         self._run_calibredb(["remove", ",".join([str(e) for e in ids])])
 
         return self
 
     def remove_books(self, books: List[BookMetadata]):
         return self.remove_from_ids(ids=[e.id for e in books])
-    
+
     def show_metadata(self, library_id: LibraryId) -> BookMetadata:
-        res =  self._run_calibredb(
-            [
-                "show_metadata", str(library_id), "--as-opf"
-            ]
-        )
+        res = self._run_calibredb(["show_metadata", str(library_id), "--as-opf"])
 
-        print(res)
+        raise NotImplementedError
 
-        print(epub.opf.parse_opf(res.decode('utf-8')).metadata.titles)
+        # print(res)
+
+        # print(epub.opf.parse_opf(res.decode("utf-8")).metadata.titles)

@@ -11,7 +11,7 @@ class BookMetadata(BaseModel):
     authors: str
     cover: Optional[Path] = None
     languages: Optional[List[str]] = None
-    title: str
+    title: Optional[str] = None
     formats: Optional[List[Path]] = None
     series: Optional[str] = None
     series_index: Optional[float] = None
