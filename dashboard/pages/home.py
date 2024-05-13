@@ -17,7 +17,7 @@ def file_download_link(library_path: Path, formats: List[str]):
     p = p.relative_to(library_path)
 
     location = "/download-from-library/{}".format(urlquote(str(p)))
-    return html.A("Download", href=location)
+    return html.A(html.I(className="bi bi-download"), href=location)
 
 
 def display_library(books_metadata, row_size: int = 7):
@@ -37,10 +37,7 @@ def display_library(books_metadata, row_size: int = 7):
                 ),
                 dbc.CardBody(
                     [
-                        dcc.Link(
-                            html.H6(entry.title, className="card-title"),
-                            href=f"/book/{entry.id}",
-                        ),
+                        html.H6(entry.title, className="card-title"),
                         html.P(
                             entry.authors,
                             className="card-subtitle",
@@ -64,7 +61,7 @@ def display_library(books_metadata, row_size: int = 7):
 
     for row in rows:
         while len(row) < row_size:
-            row.append(dbc.Card(className="p-2 invisible"))
+            row.append(dbc.Card(className="p-2 m-2 rounded invisible"))
 
     rows = [dbc.CardGroup(row) for row in rows]
 

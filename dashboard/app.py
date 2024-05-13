@@ -8,7 +8,7 @@ from flask import Flask, send_from_directory
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
 server = Flask(__name__)
 app = Dash(
-    server=server, use_pages=True, external_stylesheets=[dbc.themes.COSMO, dbc_css]
+    server=server, use_pages=True, external_stylesheets=[dbc.themes.COSMO, dbc.icons.BOOTSTRAP, dbc_css]
 )
 
 
@@ -24,8 +24,18 @@ def download_from_library(path):
 navbar = dbc.NavbarSimple(
     brand="Colibry",
     children=[
-        dbc.Button("Upload", color="primary", className="me-1"),
-        dbc.Button("Reload Library", color="primary", id="reload-library"),
+        dbc.Button(html.I(className="bi bi-upload"), color="primary", className="me-1", id="upload-button"),
+        dbc.Button(html.I(className="bi bi-bootstrap-reboot"), color="primary", id="reload-library"),
+        dbc.Tooltip(
+            "Upload a new book to the lilbrary.",
+            target="upload-button",
+            placement="bottom"
+        ),
+        dbc.Tooltip(
+            "Re-index the Calibre Library. Necessary if some changes have been performed to the library.",
+            target="reload-library",
+            placement="bottom"
+        )
     ],
     brand_href="/home",
     color="primary",
