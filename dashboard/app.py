@@ -1,18 +1,15 @@
-import json
-
 import dash
 import dash_bootstrap_components as dbc
 from app_config import APP_CONFIG
-from calibre import CalibreLibrary, BookMetadata
+from calibre import CalibreLibrary
 from dash import Dash, Input, Output, callback, dcc, html
-from dash.exceptions import PreventUpdate
 from flask import Flask, send_from_directory
-from pydantic import TypeAdapter
-from typing import List
 
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
 server = Flask(__name__)
-app = Dash(server=server, use_pages=True, external_stylesheets=[dbc.themes.COSMO, dbc_css])
+app = Dash(
+    server=server, use_pages=True, external_stylesheets=[dbc.themes.COSMO, dbc_css]
+)
 
 
 @server.route("/download-from-library/<path:path>")

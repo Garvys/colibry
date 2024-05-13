@@ -1,9 +1,5 @@
 import dash
-from dash import html, Input, Output, callback
-import dash_bootstrap_components as dbc
-from typing import List
-from pathlib import Path
-from urllib.parse import quote as urlquote
+from dash import html
 from app_config import APP_CONFIG
 from calibre.library import CalibreLibrary
 
