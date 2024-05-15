@@ -23,6 +23,44 @@ def download_from_library(path):
     )
 
 
+navbar_right = dbc.Nav(
+    [
+        # dbc.Col(dbc.Input(type="search", placeholder="Search")),
+        # dbc.Col(
+        #     dbc.Button(
+        #         "Search", color="primary", className="ms-2", n_clicks=0
+        #     ),
+        #     width="auto",
+        # ),
+        dbc.NavItem(
+            dbc.NavLink(
+                html.I(
+                    className="bi bi-upload", id="upload-button"
+                )
+            )
+        ),
+        dbc.NavItem(
+            dbc.NavLink(
+                html.I(
+                    className="bi bi-bootstrap-reboot",
+                    id="reload-library",
+                )
+        )),
+        dbc.Tooltip(
+            "Upload a new book to the lilbrary.",
+            target="upload-button",
+            placement="bottom",
+        ),
+        dbc.Tooltip(
+            "Re-index the Calibre Library. Necessary if some changes have been performed to the library.",
+            target="reload-library",
+            placement="bottom",
+        ),
+    ],
+    className="g-0 ms-auto flex-nowrap mt-3 mt-md-0",
+    # align="center",
+)
+
 navbar = dbc.Navbar(
     dbc.Container(
         [
@@ -34,46 +72,54 @@ navbar = dbc.Navbar(
                         )
                     ),
                     dbc.Col(dbc.NavbarBrand("Colibry", href="/home")),
-                    dbc.Col(html.Div(), width=4),
-                    dbc.Col(
-                        dbc.Nav(
-                            [
-                                dbc.NavItem(
-                                    dbc.NavLink(
-                                        html.I(
-                                            className="bi bi-upload", id="upload-button"
-                                        )
-                                    )
-                                ),
-                                dbc.NavItem(
-                                    dbc.NavLink(
-                                        html.I(
-                                            className="bi bi-bootstrap-reboot",
-                                            id="reload-library",
-                                        )
-                                    )
-                                ),
-                                dbc.Tooltip(
-                                    "Upload a new book to the lilbrary.",
-                                    target="upload-button",
-                                    placement="bottom",
-                                ),
-                                dbc.Tooltip(
-                                    "Re-index the Calibre Library. Necessary if some changes have been performed to the library.",
-                                    target="reload-library",
-                                    placement="bottom",
-                                ),
-                            ],
-                            navbar=True,
-                        ),
-                        # class_name="me-auto",
-                    ),
-                ],
+                ]
+            ),
+            dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
+            dbc.Collapse(
+                navbar_right,
+                id="navbar-collapse",
+                is_open=False,
+                navbar=True,
+            ),
+                #     dbc.Col(
+                #         dbc.Nav(
+                #             [
+                #                 dbc.NavItem(
+                #                     dbc.NavLink(
+                #                         html.I(
+                #                             className="bi bi-upload", id="upload-button"
+                #                         )
+                #                     )
+                #                 ),
+                #                 dbc.NavItem(
+                #                     dbc.NavLink(
+                #                         html.I(
+                #                             className="bi bi-bootstrap-reboot",
+                #                             id="reload-library",
+                #                         )
+                #                     )
+                #                 ),
+                #                 dbc.Tooltip(
+                #                     "Upload a new book to the lilbrary.",
+                #                     target="upload-button",
+                #                     placement="bottom",
+                #                 ),
+                #                 dbc.Tooltip(
+                #                     "Re-index the Calibre Library. Necessary if some changes have been performed to the library.",
+                #                     target="reload-library",
+                #                     placement="bottom",
+                #                 ),
+                #             ],
+                #             navbar=True,
+                #         ),
+                #         # class_name="me-auto",
+                #     ),
+                # ],
                 # align="center",
                 # className="g-0",
-            )
         ],
         fluid=True,
+        className="m-2"
     ),
     color="dark",
     dark=True,
