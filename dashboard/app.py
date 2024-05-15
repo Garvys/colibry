@@ -2,7 +2,7 @@ import dash
 import dash_bootstrap_components as dbc
 from app_config import APP_CONFIG
 from calibre import CalibreLibrary
-from dash import Dash, Input, Output, callback, dcc, html
+from dash import Dash, Input, Output, callback, dcc, html, State
 from flask import Flask, send_from_directory
 
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
@@ -32,20 +32,28 @@ navbar_right = dbc.Nav(
         #     ),
         #     width="auto",
         # ),
-        dbc.NavItem(
-            dbc.NavLink(
-                html.I(
-                    className="bi bi-upload", id="upload-button"
-                )
-            )
+        dbc.Button(html.I(className="bi bi-upload", id="upload-button")),
+        dbc.Button(
+            html.I(
+                className="bi bi-bootstrap-reboot",
+                id="reload-library",
+            ),
+            class_name="ms-1",
         ),
-        dbc.NavItem(
-            dbc.NavLink(
-                html.I(
-                    className="bi bi-bootstrap-reboot",
-                    id="reload-library",
-                )
-        )),
+        # dbc.NavItem(
+        #     dbc.NavLink(
+        #         html.I(
+        #             className="bi bi-upload", id="upload-button"
+        #         )
+        #     )
+        # ),
+        # dbc.NavItem(
+        #     dbc.NavLink(
+        #         html.I(
+        #             className="bi bi-bootstrap-reboot",
+        #             id="reload-library",
+        #         )
+        # )),
         dbc.Tooltip(
             "Upload a new book to the lilbrary.",
             target="upload-button",
@@ -66,12 +74,19 @@ navbar = dbc.Navbar(
         [
             dbc.Row(
                 [
+                    # dbc.Col(
+                    #     dcc.Link(
+                    #         html.Img(src="assets/logo.jpg", height="40px"), href="/home"
+                    #     )
+                    # ),
                     dbc.Col(
-                        dcc.Link(
-                            html.Img(src="assets/logo.jpg", height="40px"), href="/home"
-                        )
+                        dbc.NavbarBrand(
+                            html.Img(src="assets/Colibry.svg", height="40px"),
+                            href="/home",
+                        ),
+                        align="center",
+                        className="g-0",
                     ),
-                    dbc.Col(dbc.NavbarBrand(html.Img(src="assets/Colibry.svg", height="40px"), href="/home")),
                 ]
             ),
             dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
@@ -81,45 +96,44 @@ navbar = dbc.Navbar(
                 is_open=False,
                 navbar=True,
             ),
-                #     dbc.Col(
-                #         dbc.Nav(
-                #             [
-                #                 dbc.NavItem(
-                #                     dbc.NavLink(
-                #                         html.I(
-                #                             className="bi bi-upload", id="upload-button"
-                #                         )
-                #                     )
-                #                 ),
-                #                 dbc.NavItem(
-                #                     dbc.NavLink(
-                #                         html.I(
-                #                             className="bi bi-bootstrap-reboot",
-                #                             id="reload-library",
-                #                         )
-                #                     )
-                #                 ),
-                #                 dbc.Tooltip(
-                #                     "Upload a new book to the lilbrary.",
-                #                     target="upload-button",
-                #                     placement="bottom",
-                #                 ),
-                #                 dbc.Tooltip(
-                #                     "Re-index the Calibre Library. Necessary if some changes have been performed to the library.",
-                #                     target="reload-library",
-                #                     placement="bottom",
-                #                 ),
-                #             ],
-                #             navbar=True,
-                #         ),
-                #         # class_name="me-auto",
-                #     ),
-                # ],
-                # align="center",
-                # className="g-0",
+            #     dbc.Col(
+            #         dbc.Nav(
+            #             [
+            #                 dbc.NavItem(
+            #                     dbc.NavLink(
+            #                         html.I(
+            #                             className="bi bi-upload", id="upload-button"
+            #                         )
+            #                     )
+            #                 ),
+            #                 dbc.NavItem(
+            #                     dbc.NavLink(
+            #                         html.I(
+            #                             className="bi bi-bootstrap-reboot",
+            #                             id="reload-library",
+            #                         )
+            #                     )
+            #                 ),
+            #                 dbc.Tooltip(
+            #                     "Upload a new book to the lilbrary.",
+            #                     target="upload-button",
+            #                     placement="bottom",
+            #                 ),
+            #                 dbc.Tooltip(
+            #                     "Re-index the Calibre Library. Necessary if some changes have been performed to the library.",
+            #                     target="reload-library",
+            #                     placement="bottom",
+            #                 ),
+            #             ],
+            #             navbar=True,
+            #         ),
+            #         # class_name="me-auto",
+            #     ),
+            # ],
+            # align="center",
+            # className="g-0",
         ],
         fluid=True,
-        className="m-2"
     ),
     color="dark",
     dark=True,
@@ -156,6 +170,18 @@ def load_library(_n_clicks):
     books_metadata = calibre_library.list()
 
     return [e.model_dump_json() for e in books_metadata]
+
+
+# add callback for toggling the collapse on small screens
+@app.callback(
+    Output("navbar-collapse", "is_open"),
+    [Input("navbar-toggler", "n_clicks")],
+    [State("navbar-collapse", "is_open")],
+)
+def toggle_navbar_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
 
 
 if __name__ == "__main__":
