@@ -71,7 +71,7 @@ navbar = dbc.Navbar(
                             html.Img(src="assets/logo.jpg", height="40px"), href="/home"
                         )
                     ),
-                    dbc.Col(dbc.NavbarBrand("Colibry", href="/home")),
+                    dbc.Col(dbc.NavbarBrand(html.Img(src="assets/Colibry.svg", height="40px"), href="/home")),
                 ]
             ),
             dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
