@@ -161,7 +161,7 @@ navbar = dbc.Navbar(
 # )
 
 
-app.layout = html.Div([dcc.Store(id="library"), navbar, dash.page_container])
+app.layout = html.Div([dcc.Store(id="library"), navbar, dash.page_container], className="")
 
 
 @callback(Output("library", "data"), Input("reload-library", "n_clicks"))

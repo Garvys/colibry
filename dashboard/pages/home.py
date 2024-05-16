@@ -40,10 +40,10 @@ def display_library(books_metadata, row_size: int = 7):
                 ),
                 dbc.CardBody(
                     [
-                        html.P(entry.title, className="card-title"),
+                        html.P(entry.title, className="font-weight-bold"),
                         html.P(
                             entry.authors,
-                            className="card-subtitle",
+                            className="card-subtitle text-primary",
                         ),
                         html.P(text),
                         file_download_link(
@@ -83,7 +83,7 @@ def display_library(books_metadata, row_size: int = 7):
 def add_search():
     authors_dropdown = dbc.Col(
         [
-            dbc.Label("Authors", html_for="autthors-filter"),
+            dbc.Label("Authors", html_for="authors-filter"),
             dcc.Dropdown(
                 id="authors-filter", multi=True, placeholder="Author", className="dbc"
             ),
