@@ -34,22 +34,26 @@ def display_library(books_metadata, row_size: int = 7):
             [
 
                 dbc.CardImg(
-                    src=f"/download-from-library/{urlquote(str(cover_path))}", top=True, className="shadow rounded", style={
+                    src=f"/download-from-library/{urlquote(str(cover_path))}", top=True, className=" rounded", style={
                         "height": "15rem"
                     }
                 ),
                 dbc.CardBody(
                     [
-                        html.P(entry.title, className="font-weight-bold"),
+                        html.P(entry.title, className="font-weight-bold", style={"font-weight": "bold", "margin-bottom": "0.5rem"}),
                         html.P(
                             entry.authors,
                             className="card-subtitle text-primary",
                         ),
-                        html.P(text),
-                        file_download_link(
-                            library_path=APP_CONFIG.library_path, formats=entry.formats
-                        ),
-                    ]
+                        html.P([text,
+                            file_download_link(
+                                library_path=APP_CONFIG.library_path, formats=entry.formats
+                            )
+                        ]),
+                    ],
+                    style={
+                        "padding": "0.5rem"
+                    }
                 ),
             ],
             # className="p-2 m-2 rounded",
