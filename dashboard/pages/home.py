@@ -38,6 +38,12 @@ def display_library(books_metadata, row_size: int = 7):
                         "height": "15rem"
                     }
                 ),
+                # dbc.CardImgOverlay(
+                #     [file_download_link(
+                #           library_path=APP_CONFIG.library_path, formats=entry.formats
+                #     )],
+                #     className="position-absolute top-0 end-0"
+                # ),
                 dbc.CardBody(
                     [
                         html.P(entry.title, className="font-weight-bold", style={"font-weight": "bold", "margin-bottom": "0.5rem"}),
