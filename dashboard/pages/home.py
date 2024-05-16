@@ -21,7 +21,7 @@ def file_download_link(library_path: Path, formats: List[str]):
 
 
 def display_library(books_metadata, row_size: int = 7):
-    rows = [[]]
+    cards = []
 
     for entry in books_metadata:
         cover_path = Path(entry.cover).relative_to(APP_CONFIG.library_path)
@@ -32,12 +32,15 @@ def display_library(books_metadata, row_size: int = 7):
 
         card = dbc.Card(
             [
+
                 dbc.CardImg(
-                    src=f"/download-from-library/{urlquote(str(cover_path))}", top=True
+                    src=f"/download-from-library/{urlquote(str(cover_path))}", top=True, className="shadow rounded", style={
+                        "height": "15rem"
+                    }
                 ),
                 dbc.CardBody(
                     [
-                        html.H6(entry.title, className="card-title"),
+                        html.P(entry.title, className="card-title"),
                         html.P(
                             entry.authors,
                             className="card-subtitle",
@@ -49,28 +52,30 @@ def display_library(books_metadata, row_size: int = 7):
                     ]
                 ),
             ],
-            className="p-2 m-2 rounded",
+            # className="p-2 m-2 rounded",
+            className="h-100 border-0",
+            style={
+                "width": "10rem",
+                "height": "50rem"
+            }
         )
 
-        rows[-1].append(card)
+        cards.append(dbc.Col(card, className="d-flex flex-wrap"))
 
-        if len(rows[-1]) == row_size:
-            rows.append([])
+    # rows = [row for row in rows if row]
 
-    rows = [row for row in rows if row]
+    # for row in rows:
+    #     while len(row) < row_size:
+    #         row.append(dbc.Card(className="p-2 m-2 rounded invisible"))
 
-    for row in rows:
-        while len(row) < row_size:
-            row.append(dbc.Card(className="p-2 m-2 rounded invisible"))
-
-    rows = [dbc.CardGroup(row) for row in rows]
+    # rows = [dbc.CardGroup(row) for row in rows]
 
     if len(books_metadata) <= 1:
         t = f"{len(books_metadata)} e-book found :"
     else:
         t = f"{len(books_metadata)} e-books found :"
 
-    res = html.Div([html.P(t, className="p-2"), html.Div(rows)])
+    res = html.Div([html.P(t, className="p-2"), dbc.Row(cards, className="")])
 
     return res
 
