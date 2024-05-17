@@ -11,13 +11,16 @@ from app_config import APP_CONFIG
 dash.register_page(__name__)
 
 
-def file_download_link(library_path: Path, formats: List[str]):
+def file_download_link(item, library_path: Path, formats: List[str]):
     """Create a Plotly Dash 'A' element that downloads a file from the app."""
     p = Path(formats[0])
     p = p.relative_to(library_path)
 
     location = "/download-from-library/{}".format(urlquote(str(p)))
-    return html.A(html.I(className="bi bi-download"), href=location)
+    return html.A(
+        item,
+        # html.I(className="bi bi-download"), 
+        href=location)
 
 
 def display_library(books_metadata, row_size: int = 7):
@@ -32,30 +35,21 @@ def display_library(books_metadata, row_size: int = 7):
 
         card = dbc.Card(
             [
-
-                dbc.CardImg(
+                file_download_link(dbc.CardImg(
                     src=f"/download-from-library/{urlquote(str(cover_path))}", top=True, className=" rounded", style={
                         "height": "15rem"
                     }
-                ),
-                # dbc.CardImgOverlay(
-                #     [file_download_link(
-                #           library_path=APP_CONFIG.library_path, formats=entry.formats
-                #     )],
-                #     className="position-absolute top-0 end-0"
-                # ),
+                ), library_path=APP_CONFIG.library_path, formats=entry.formats),
                 dbc.CardBody(
                     [
-                        html.P(entry.title, className="font-weight-bold", style={"font-weight": "bold", "margin-bottom": "0.5rem"}),
-                        html.P(
-                            entry.authors,
-                            className="card-subtitle text-primary",
+                        file_download_link(
+                            html.P(entry.title, className="font-weight-bold", style={"font-weight": "bold", "margin-bottom": "0.5rem"}),
+                            library_path=APP_CONFIG.library_path, formats=entry.formats
                         ),
-                        html.P([text,
-                            file_download_link(
-                                library_path=APP_CONFIG.library_path, formats=entry.formats
-                            )
-                        ]),
+                        file_download_link(html.P([
+                            html.Div(entry.authors, className="text-primary"),
+                            text,
+                        ]), library_path=APP_CONFIG.library_path, formats=entry.formats),
                     ],
                     style={
                         "padding": "0.5rem"
@@ -69,6 +63,8 @@ def display_library(books_metadata, row_size: int = 7):
                 "height": "50rem"
             }
         )
+
+        # card = file_download_link(card, library_path=APP_CONFIG.library_path, formats=entry.formats)
 
         cards.append(dbc.Col(card, className="d-flex flex-wrap"))
 
