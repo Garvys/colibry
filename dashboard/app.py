@@ -114,4 +114,4 @@ def toggle_navbar_collapse(n, is_open):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    app.run(debug=APP_CONFIG.debug)
+    app.run(debug=APP_CONFIG.debug, host='0.0.0.0')
