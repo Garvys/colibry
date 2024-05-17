@@ -1,9 +1,13 @@
+import logging
+
 import dash
 import dash_bootstrap_components as dbc
 from app_config import APP_CONFIG
 from calibre import CalibreLibrary
-from dash import Dash, Input, Output, callback, dcc, html, State
+from dash import Dash, Input, Output, State, callback, dcc, html
 from flask import Flask, send_from_directory
+
+logger = logging.getLogger(__name__)
 
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
 server = Flask(__name__)
@@ -25,13 +29,6 @@ def download_from_library(path):
 
 navbar_right = dbc.Nav(
     [
-        # dbc.Col(dbc.Input(type="search", placeholder="Search")),
-        # dbc.Col(
-        #     dbc.Button(
-        #         "Search", color="primary", className="ms-2", n_clicks=0
-        #     ),
-        #     width="auto",
-        # ),
         dbc.Button(html.I(className="bi bi-upload", id="upload-button")),
         dbc.Button(
             html.I(
@@ -40,20 +37,6 @@ navbar_right = dbc.Nav(
             ),
             class_name="ms-1",
         ),
-        # dbc.NavItem(
-        #     dbc.NavLink(
-        #         html.I(
-        #             className="bi bi-upload", id="upload-button"
-        #         )
-        #     )
-        # ),
-        # dbc.NavItem(
-        #     dbc.NavLink(
-        #         html.I(
-        #             className="bi bi-bootstrap-reboot",
-        #             id="reload-library",
-        #         )
-        # )),
         dbc.Tooltip(
             "Upload a new book to the lilbrary.",
             target="upload-button",
@@ -66,7 +49,6 @@ navbar_right = dbc.Nav(
         ),
     ],
     className="g-0 ms-auto flex-nowrap mt-3 mt-md-0",
-    # align="center",
 )
 
 navbar = dbc.Navbar(
@@ -96,42 +78,6 @@ navbar = dbc.Navbar(
                 is_open=False,
                 navbar=True,
             ),
-            #     dbc.Col(
-            #         dbc.Nav(
-            #             [
-            #                 dbc.NavItem(
-            #                     dbc.NavLink(
-            #                         html.I(
-            #                             className="bi bi-upload", id="upload-button"
-            #                         )
-            #                     )
-            #                 ),
-            #                 dbc.NavItem(
-            #                     dbc.NavLink(
-            #                         html.I(
-            #                             className="bi bi-bootstrap-reboot",
-            #                             id="reload-library",
-            #                         )
-            #                     )
-            #                 ),
-            #                 dbc.Tooltip(
-            #                     "Upload a new book to the lilbrary.",
-            #                     target="upload-button",
-            #                     placement="bottom",
-            #                 ),
-            #                 dbc.Tooltip(
-            #                     "Re-index the Calibre Library. Necessary if some changes have been performed to the library.",
-            #                     target="reload-library",
-            #                     placement="bottom",
-            #                 ),
-            #             ],
-            #             navbar=True,
-            #         ),
-            #         # class_name="me-auto",
-            #     ),
-            # ],
-            # align="center",
-            # className="g-0",
         ],
         fluid=True,
     ),
@@ -139,33 +85,15 @@ navbar = dbc.Navbar(
     dark=True,
 )
 
-# navbar = dbc.NavbarSimple(
-#     brand="Colibry",
-#     children=[
-#         dbc.Button(html.I(className="bi bi-upload"), color="primary", className="me-1", id="upload-button"),
-#         dbc.Button(html.I(className="bi bi-bootstrap-reboot"), color="primary", id="reload-library"),
-#         dbc.Tooltip(
-#             "Upload a new book to the lilbrary.",
-#             target="upload-button",
-#             placement="bottom"
-#         ),
-#         dbc.Tooltip(
-#             "Re-index the Calibre Library. Necessary if some changes have been performed to the library.",
-#             target="reload-library",
-#             placement="bottom"
-#         )
-#     ],
-#     brand_href="/home",
-#     color="primary",
-#     dark=True,
-# )
 
-
-app.layout = html.Div([dcc.Store(id="library"), navbar, dash.page_container], className="")
+app.layout = html.Div(
+    [dcc.Store(id="library"), navbar, dash.page_container]
+)
 
 
 @callback(Output("library", "data"), Input("reload-library", "n_clicks"))
 def load_library(_n_clicks):
+    logger.info("Loading library...")
     calibre_library = CalibreLibrary(APP_CONFIG.library_path)
     books_metadata = calibre_library.list()
 
@@ -185,4 +113,5 @@ def toggle_navbar_collapse(n, is_open):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     app.run(debug=APP_CONFIG.debug)
