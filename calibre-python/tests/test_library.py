@@ -44,10 +44,9 @@ def test_clone(tmp_path: Path, ebook_paths: List[Path]):
 
     library2 = library1.clone(tmp_path / "library2").add(ebook_paths)
 
+    print(library2.list())
+
     assert len(library1.list()) == 0
     assert len(library2.list()) == len(ebook_paths)
 
 
-# def test_show_metadata(tmp_path: Path, ebook_paths: List[Path]):
-#     library = Library.new_empty_library(tmp_path / "library").add(ebook_paths[:1])
-#     library.show_metadata(1)

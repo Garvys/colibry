@@ -120,8 +120,8 @@ def add_search():
         [
             dbc.Label("Sort By:", html_for="sort-by"),
             dcc.Dropdown(
-                value="Authors A->Z",
-                options=["Authors A->Z", "Authors Z->A"],
+                value="Newest first",
+                options=["Authors A->Z", "Authors Z->A", "Newest first", "Oldest first"],
                 className="dbc",
                 id="sort-by",
             ),
@@ -212,6 +212,10 @@ def output_text(
         books_metadata = sorted(books_metadata, key=lambda x: x.authors)
     elif sort_by == "Authors Z->A":
         books_metadata = sorted(books_metadata, key=lambda x: x.authors, reverse=True)
+    elif sort_by == "Oldest first":
+        books_metadata = sorted(books_metadata, key=lambda x: x.timestamp)
+    elif sort_by == "Newest first":
+        books_metadata = sorted(books_metadata, key=lambda x: x.timestamp, reverse=True)
     else:
         raise ValueError(f"Sort not supported: {sort_by}")
     return display_library(books_metadata)

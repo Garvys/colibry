@@ -7,7 +7,7 @@ class AppConfig(BaseSettings):
     debug: bool = True
 
     class Config:
-        env_prefix = "CD_"
+        env_prefix = "COLIBRY_"
 
 
 APP_CONFIG = AppConfig()

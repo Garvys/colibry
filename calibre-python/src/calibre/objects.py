@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from pathlib import Path
+from datetime import datetime
 
 LibraryId = int
 
@@ -15,3 +16,4 @@ class BookMetadata(BaseModel):
     formats: Optional[List[Path]] = None
     series: Optional[str] = None
     series_index: Optional[float] = None
+    timestamp: Optional[datetime] = None
