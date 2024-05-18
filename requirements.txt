@@ -24,8 +24,6 @@ dash-html-components==2.0.0
     # via dash
 dash-table==5.0.0
     # via dash
-epub==0.5.2
-    # via calibre-python
 flask==3.0.3
     # via dash
 gunicorn==22.0.0
