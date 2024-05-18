@@ -24,6 +24,10 @@ jobs:
     - name: Linting check
       run: ruff check .
 
+    - name: Install calibre
+      run: |
+        wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sudo sh /dev/stdin version=7.10.0
+
     - name: Test calibre-python
       run: pytest -xs calibre-python
 
