@@ -1,0 +1,38 @@
+name: CI
+
+on: 
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    - run: pip install -r requirements-dev.txt
+
+    - name: Formatting check
+      run: ruff format --check
+
+    - name: Linting check
+      run: ruff check .
+
+    - name: Install calibre
+      run: |
+        sudo apt-get update
+        sudo apt-get install libegl1 libopengl0 libxcb-cursor0
+        wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sudo sh /dev/stdin version=7.10.0
+
+    - name: Test calibre-python
+      run: pytest -xs calibre-python
+
+    - name: Test dashboard
+      run: pytest -xs dashboard
+

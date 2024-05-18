@@ -5,7 +5,6 @@ from typing import List, Optional
 import json
 from calibre.objects import BookMetadata, LibraryId
 from pydantic import TypeAdapter
-import epub
 
 
 def run_shell(cmd):
@@ -21,8 +20,10 @@ class CalibreLibrary:
             raise ValueError(f"Library not found : {library_path}")
         self.library_path = library_path
 
-    def _run_calibredb(self, l: List[str]):
-        return run_shell(["calibredb", "--with-library", str(self.library_path), *l])
+    def _run_calibredb(self, params: List[str]):
+        return run_shell(
+            ["calibredb", "--with-library", str(self.library_path), *params]
+        )
 
     @classmethod
     def new_empty_library(cls, new_library_path: Path) -> CalibreLibrary:
@@ -57,7 +58,12 @@ class CalibreLibrary:
         ascending: bool = False,
         search: str = "",
     ) -> List[BookMetadata]:
-        cmd = ["list", "--for-machine", "--fields", "authors,title,cover,formats,series,series_index,timestamp"]
+        cmd = [
+            "list",
+            "--for-machine",
+            "--fields",
+            "authors,title,cover,formats,series,series_index,timestamp",
+        ]
         if limit is not None:
             cmd += ["--limit", str(limit)]
         if sort_by is not None:
@@ -85,12 +91,3 @@ class CalibreLibrary:
 
     def remove_books(self, books: List[BookMetadata]):
         return self.remove_from_ids(ids=[e.id for e in books])
-
-    def show_metadata(self, library_id: LibraryId) -> BookMetadata:
-        res = self._run_calibredb(["show_metadata", str(library_id), "--as-opf"])
-
-        raise NotImplementedError
-
-        # print(res)
-
-        # print(epub.opf.parse_opf(res.decode("utf-8")).metadata.titles)
