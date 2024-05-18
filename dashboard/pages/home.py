@@ -121,7 +121,12 @@ def add_search():
             dbc.Label("Sort By:", html_for="sort-by"),
             dcc.Dropdown(
                 value="Newest first",
-                options=["Authors A->Z", "Authors Z->A", "Newest first", "Oldest first"],
+                options=[
+                    "Authors A->Z",
+                    "Authors Z->A",
+                    "Newest first",
+                    "Oldest first",
+                ],
                 className="dbc",
                 id="sort-by",
             ),
@@ -198,7 +203,13 @@ def output_text(
     library,
     _n_clicks,
 ):
-    logger.debug("Updating library view filters (%s, %s, %s) and sort %s", text_search, authors_filter, series_filter, sort_by)
+    logger.debug(
+        "Updating library view filters (%s, %s, %s) and sort %s",
+        text_search,
+        authors_filter,
+        series_filter,
+        sort_by,
+    )
     books_metadata = [BookMetadata.model_validate_json(e) for e in library]
     if authors_filter:
         books_metadata = [b for b in books_metadata if b.authors in authors_filter]
