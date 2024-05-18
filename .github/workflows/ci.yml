@@ -26,6 +26,8 @@ jobs:
 
     - name: Install calibre
       run: |
+        apt-get update
+        apt-get install libegl1
         wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sudo sh /dev/stdin version=7.10.0
 
     - name: Test calibre-python
