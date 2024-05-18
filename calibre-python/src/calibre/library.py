@@ -57,7 +57,12 @@ class CalibreLibrary:
         ascending: bool = False,
         search: str = "",
     ) -> List[BookMetadata]:
-        cmd = ["list", "--for-machine", "--fields", "authors,title,cover,formats,series,series_index,timestamp"]
+        cmd = [
+            "list",
+            "--for-machine",
+            "--fields",
+            "authors,title,cover,formats,series,series_index,timestamp",
+        ]
         if limit is not None:
             cmd += ["--limit", str(limit)]
         if sort_by is not None:
