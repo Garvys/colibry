@@ -1,0 +1,3 @@
+-r requirements.in
+-e file:./calibre-python[test]#calibre
+ruff==0.4.4
