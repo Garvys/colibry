@@ -4,9 +4,7 @@ from typing import List
 
 
 def test_new_add_list(tmp_path: Path, ebook_paths: List[Path]):
-    library = CalibreDB.new_empty_library(tmp_path / "library").add(
-        ebooks=ebook_paths
-    )
+    library = CalibreDB.new_empty_library(tmp_path / "library").add(ebooks=ebook_paths)
     books_metadata = library.list()
 
     assert len(books_metadata) == len(ebook_paths)
@@ -22,9 +20,7 @@ def test_new_add_list(tmp_path: Path, ebook_paths: List[Path]):
 
 
 def test_remove_books(tmp_path: Path, ebook_paths: List[Path]):
-    library = CalibreDB.new_empty_library(tmp_path / "library").add(
-        ebooks=ebook_paths
-    )
+    library = CalibreDB.new_empty_library(tmp_path / "library").add(ebooks=ebook_paths)
 
     books_metadata = library.list()
 
@@ -34,9 +30,7 @@ def test_remove_books(tmp_path: Path, ebook_paths: List[Path]):
 
 
 def test_remove_from_ids(tmp_path: Path, ebook_paths: List[Path]):
-    library = CalibreDB.new_empty_library(tmp_path / "library").add(
-        ebooks=ebook_paths
-    )
+    library = CalibreDB.new_empty_library(tmp_path / "library").add(ebooks=ebook_paths)
 
     books_metadata = library.list()
 
