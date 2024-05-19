@@ -9,7 +9,7 @@ from app_config import APP_CONFIG
 from calibre.library import BookMetadata
 from dash import Input, Output, State, callback, dcc, html
 
-dash.register_page(__name__)
+dash.register_page(__name__, path="/", name="home")
 logger = logging.getLogger(__name__)
 
 
