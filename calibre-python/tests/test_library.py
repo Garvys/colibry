@@ -1,4 +1,4 @@
-from calibre.library import CalibreDB
+from calibre.calibredb import CalibreDB
 from pathlib import Path
 from typing import List
 
@@ -43,8 +43,6 @@ def test_clone(tmp_path: Path, ebook_paths: List[Path]):
     library1 = CalibreDB.new_empty_library(tmp_path / "library1")
 
     library2 = library1.clone(tmp_path / "library2").add(ebook_paths)
-
-    print(library2.list())
 
     assert len(library1.list()) == 0
     assert len(library2.list()) == len(ebook_paths)

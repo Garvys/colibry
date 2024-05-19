@@ -1,29 +1,53 @@
 from __future__ import annotations
-from pathlib import Path
-import subprocess
-from typing import List, Optional
+
 import json
-from calibre.objects import BookMetadata, LibraryId
+import logging
+import subprocess
+import threading
+from pathlib import Path
+from typing import List, Optional, Union
+
 from pydantic import TypeAdapter
+
+from calibre.errors import CalibreRuntimeError
+from calibre.objects import BookMetadata, LibraryId
+
+logger = logging.getLogger(__name__)
 
 
 def run_shell(cmd):
-    res = subprocess.run(cmd, stdout=subprocess.PIPE)
+    res = subprocess.run(cmd, check=True, encoding="utf-8", capture_output=True)
     if res.returncode != 0:
         raise ValueError(f"Error while running cmd {cmd}: {res.stdout}")
+    if res.stderr:
+        logger.warning(res.stderr)
     return res.stdout
 
 
 class CalibreDB:
-    def __init__(self, library_path: Path):
-        if not library_path.exists():
+    def __init__(self, library_path: Union[Path, str]):
+        if isinstance(library_path, Path) and not library_path.exists():
             raise ValueError(f"Library not found : {library_path}")
         self.library_path = library_path
 
+        # Concurrent access to calibre are forbidden by the calibredb CLI
+        self.mutex = threading.Lock()
+
     def _run_calibredb(self, params: List[str]):
-        return run_shell(
-            ["calibredb", "--with-library", str(self.library_path), *params]
-        )
+        cmd = ["calibredb", "--with-library", str(self.library_path), *params]
+
+        logger.debug("Running cmd : %s", cmd)
+
+        self.mutex.acquire()
+
+        try:
+            res = run_shell(cmd)
+        except subprocess.CalledProcessError as e:
+            raise CalibreRuntimeError(e.cmd, e.returncode, e.stdout, e.stderr) from e
+
+        self.mutex.release()
+
+        return res
 
     @classmethod
     def new_empty_library(cls, new_library_path: Path) -> CalibreDB:
@@ -73,14 +97,13 @@ class CalibreDB:
         if search:
             cmd += ["--search", search]
         res = self._run_calibredb(cmd)
-        return TypeAdapter(List[BookMetadata]).validate_python(
-            json.loads(res.decode("utf-8"))
-        )
+
+        return TypeAdapter(List[BookMetadata]).validate_python(json.loads(res))
 
     def list_authors(self) -> List[str]:
         res = self._run_calibredb(["list", "--for-machine", "--fields", "authors"])
         books_metadata = TypeAdapter(List[BookMetadata]).validate_python(
-            json.loads(res.decode("utf-8"))
+            json.loads(res)
         )
         return [e.authors for e in books_metadata if e.authors]
 
