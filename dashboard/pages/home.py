@@ -6,7 +6,7 @@ from urllib.parse import quote as urlquote
 import dash
 import dash_bootstrap_components as dbc
 from app_config import APP_CONFIG
-from calibre.library import BookMetadata
+from calibre.calibredb import BookMetadata
 from dash import Input, Output, State, callback, dcc, html
 
 dash.register_page(__name__, path="/", name="home")

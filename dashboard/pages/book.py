@@ -1,7 +1,7 @@
 import dash
 from dash import html
 from app_config import APP_CONFIG
-from calibre.library import CalibreDB
+from calibre.calibredb import CalibreDB
 
 
 dash.register_page(__name__, path_template="/book/<calibre_id>")
