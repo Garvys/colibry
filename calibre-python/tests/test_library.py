@@ -1,10 +1,10 @@
-from calibre.library import CalibreLibrary
+from calibre.library import CalibreDB
 from pathlib import Path
 from typing import List
 
 
 def test_new_add_list(tmp_path: Path, ebook_paths: List[Path]):
-    library = CalibreLibrary.new_empty_library(tmp_path / "library").add(
+    library = CalibreDB.new_empty_library(tmp_path / "library").add(
         ebooks=ebook_paths
     )
     books_metadata = library.list()
@@ -22,7 +22,7 @@ def test_new_add_list(tmp_path: Path, ebook_paths: List[Path]):
 
 
 def test_remove_books(tmp_path: Path, ebook_paths: List[Path]):
-    library = CalibreLibrary.new_empty_library(tmp_path / "library").add(
+    library = CalibreDB.new_empty_library(tmp_path / "library").add(
         ebooks=ebook_paths
     )
 
@@ -34,7 +34,7 @@ def test_remove_books(tmp_path: Path, ebook_paths: List[Path]):
 
 
 def test_remove_from_ids(tmp_path: Path, ebook_paths: List[Path]):
-    library = CalibreLibrary.new_empty_library(tmp_path / "library").add(
+    library = CalibreDB.new_empty_library(tmp_path / "library").add(
         ebooks=ebook_paths
     )
 
@@ -46,7 +46,7 @@ def test_remove_from_ids(tmp_path: Path, ebook_paths: List[Path]):
 
 
 def test_clone(tmp_path: Path, ebook_paths: List[Path]):
-    library1 = CalibreLibrary.new_empty_library(tmp_path / "library1")
+    library1 = CalibreDB.new_empty_library(tmp_path / "library1")
 
     library2 = library1.clone(tmp_path / "library2").add(ebook_paths)
 

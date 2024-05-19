@@ -14,7 +14,7 @@ def run_shell(cmd):
     return res.stdout
 
 
-class CalibreLibrary:
+class CalibreDB:
     def __init__(self, library_path: Path):
         if not library_path.exists():
             raise ValueError(f"Library not found : {library_path}")
@@ -26,7 +26,7 @@ class CalibreLibrary:
         )
 
     @classmethod
-    def new_empty_library(cls, new_library_path: Path) -> CalibreLibrary:
+    def new_empty_library(cls, new_library_path: Path) -> CalibreDB:
         path_empty_library = Path(__file__).resolve().parent / "empty_library"
 
         run_shell(
@@ -41,10 +41,10 @@ class CalibreLibrary:
 
         return cls(library_path=new_library_path)
 
-    def clone(self, new_library_path: Path) -> CalibreLibrary:
+    def clone(self, new_library_path: Path) -> CalibreDB:
         self._run_calibredb(["clone", str(new_library_path)])
 
-        return CalibreLibrary(library_path=new_library_path)
+        return CalibreDB(library_path=new_library_path)
 
     def add(self, ebooks: List[Path]):
         self._run_calibredb(["add", *[str(p) for p in ebooks]])
@@ -84,7 +84,7 @@ class CalibreLibrary:
         )
         return [e.authors for e in books_metadata if e.authors]
 
-    def remove_from_ids(self, ids: List[LibraryId]) -> CalibreLibrary:
+    def remove_from_ids(self, ids: List[LibraryId]) -> CalibreDB:
         self._run_calibredb(["remove", ",".join([str(e) for e in ids])])
 
         return self

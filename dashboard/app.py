@@ -3,7 +3,7 @@ import logging
 import dash
 import dash_bootstrap_components as dbc
 from app_config import APP_CONFIG
-from calibre import CalibreLibrary
+from calibre import CalibreDB
 from dash import Dash, Input, Output, State, callback, dcc, html
 from flask import Flask, send_from_directory
 
@@ -92,7 +92,7 @@ app.layout = html.Div([dcc.Store(id="library"), navbar, dash.page_container])
 @callback(Output("library", "data"), Input("reload-library", "n_clicks"))
 def load_library(_n_clicks):
     logger.info("Loading library...")
-    calibre_library = CalibreLibrary(APP_CONFIG.library_path)
+    calibre_library = CalibreDB(APP_CONFIG.library_path)
     books_metadata = calibre_library.list()
 
     return [e.model_dump_json() for e in books_metadata]
