@@ -12,12 +12,9 @@ RUN ./opt/calibre/calibredb --version
 FROM python:3.9-slim as calibredb
 
 COPY --from=calibre /opt/calibre /opt/calibre
-RUN apt-get update
-RUN apt-get install libegl1 -y
-RUN apt-get install libfontconfig libxkbcommon-x11-0 libglx-dev -y
-RUN apt-get install libopengl0 -y
-
-RUN ./opt/calibre/calibredb --version
+RUN apt-get update && \
+    apt-get install libegl1 libfontconfig libxkbcommon-x11-0 libglx-dev libopengl0 -y && \
+    apt-get clean
 
 ENV PATH "$PATH:/opt/calibre"
 
