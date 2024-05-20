@@ -1,13 +1,30 @@
-#Using python
-FROM python:3.9-slim
+FROM python:3.9-slim as calibre
 
 # Install calibre
 RUN apt-get update && \
-    apt-get install libegl1 libopengl0 libxcb-cursor0 wget xz-utils libfontconfig libxkbcommon-x11-0 python3-pyqt5 -y && \
-    wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sh /dev/stdin version=7.10.0  && \
+    apt-get install libegl1 libopengl0 libxcb-cursor0 wget xz-utils libfontconfig libxkbcommon-x11-0 python3-pyqt5 -y
+RUN  wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sh /dev/stdin version=7.10.0 install_dir=/opt isolated=y  && \
     apt-get remove wget xz-utils libfontconfig -y && \
-    apt autoremove -y && apt clean && \
-    calibredb --version
+    apt-get autoremove -y && apt-get clean
+RUN ./opt/calibre/calibredb --version
+
+RUN rm -rf /opt/calibre/translations
+RUN rm -rf /opt/calibre/lib/libQt6WebEngineCore.so.6
+
+
+FROM python:3.9-slim as calibredb
+
+RUN apt-get update && \
+    apt-get install libegl1 libfontconfig libxkbcommon-x11-0 libglx-dev libopengl0 -y && \
+    apt-get clean
+
+COPY --from=calibre /opt/calibre /opt/calibre
+
+ENV PATH "$PATH:/opt/calibre"
+
+RUN calibredb --version
+
+FROM calibredb as colibry
 
 ENV COLIBRY_LIBRARY_PATH="/app/library"
 
