@@ -22,13 +22,7 @@ COPY --from=calibre /opt/calibre /opt/calibre
 
 ENV PATH "$PATH:/opt/calibre"
 
-# RUN echo "lol"
-
-# RUN du -sh /opt/calibre/*
-# RUN du -sh /opt/calibre/lib/*
-# RUN du -sh /opt/calibre/*
-
-# RUN calibredb --version
+RUN calibredb --version
 
 FROM calibredb as colibry
 
