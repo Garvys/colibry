@@ -8,17 +8,27 @@ RUN  wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sh /de
     apt-get autoremove -y && apt-get clean
 RUN ./opt/calibre/calibredb --version
 
+RUN rm -rf /opt/calibre/translations
+RUN rm -rf /opt/calibre/lib/libQt6WebEngineCore.so.6
+
 
 FROM python:3.9-slim as calibredb
 
-COPY --from=calibre /opt/calibre /opt/calibre
 RUN apt-get update && \
     apt-get install libegl1 libfontconfig libxkbcommon-x11-0 libglx-dev libopengl0 -y && \
     apt-get clean
 
+COPY --from=calibre /opt/calibre /opt/calibre
+
 ENV PATH "$PATH:/opt/calibre"
 
-RUN calibredb --version
+# RUN echo "lol"
+
+# RUN du -sh /opt/calibre/*
+# RUN du -sh /opt/calibre/lib/*
+# RUN du -sh /opt/calibre/*
+
+# RUN calibredb --version
 
 FROM calibredb as colibry
 
