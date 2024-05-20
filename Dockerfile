@@ -1,12 +1,15 @@
 #Using python
 FROM python:3.9-slim
 
-ENV COLIBRY_LIBRARY_PATH="/app/library"
-
 # Install calibre
 RUN apt-get update && \
     apt-get install libegl1 libopengl0 libxcb-cursor0 wget xz-utils libfontconfig libxkbcommon-x11-0 python3-pyqt5 -y && \
-    wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sh /dev/stdin version=7.10.0 
+    wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sh /dev/stdin version=7.10.0  && \
+    apt-get remove wget xz-utils libfontconfig -y && \
+    apt autoremove -y && apt clean && \
+    calibredb --version
+
+ENV COLIBRY_LIBRARY_PATH="/app/library"
 
 COPY requirements.txt /app/requirements.txt
 COPY calibre-python /app/calibre-python
