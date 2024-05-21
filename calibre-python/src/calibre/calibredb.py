@@ -9,6 +9,7 @@ from typing import List, Optional, Union
 
 from pydantic import TypeAdapter
 
+from calibre.calibre_library import CalibreLibrary
 from calibre.errors import CalibreRuntimeError
 from calibre.objects import BookMetadata, LibraryId
 
@@ -24,11 +25,9 @@ def run_shell(cmd):
     return res.stdout
 
 
-class CalibreDB:
+class CalibreDB(CalibreLibrary):
     def __init__(self, library_path: Union[Path, str]):
-        if isinstance(library_path, Path) and not library_path.exists():
-            raise ValueError(f"Library not found : {library_path}")
-        self.library_path = library_path
+        super().__init__(library_path=library_path)
 
         # Concurrent access to calibre are forbidden by the calibredb CLI
         self.mutex = threading.Lock()
@@ -48,22 +47,6 @@ class CalibreDB:
         self.mutex.release()
 
         return res
-
-    @classmethod
-    def new_empty_library(cls, new_library_path: Path) -> CalibreDB:
-        path_empty_library = Path(__file__).resolve().parent / "empty_library"
-
-        run_shell(
-            [
-                "calibredb",
-                "--with-library",
-                str(path_empty_library),
-                "clone",
-                str(new_library_path),
-            ]
-        )
-
-        return cls(library_path=new_library_path)
 
     def clone(self, new_library_path: Path) -> CalibreDB:
         self._run_calibredb(["clone", str(new_library_path)])

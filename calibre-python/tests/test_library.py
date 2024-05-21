@@ -1,4 +1,5 @@
 from calibre.calibredb import CalibreDB
+from calibre.calibre_sql import CalibreSql
 from pathlib import Path
 from typing import List
 
@@ -46,3 +47,17 @@ def test_clone(tmp_path: Path, ebook_paths: List[Path]):
 
     assert len(library1.list()) == 0
     assert len(library2.list()) == len(ebook_paths)
+
+
+def test_new_add_list_sql(tmp_path: Path, ebook_paths: List[Path]):
+    library = CalibreDB.new_empty_library(tmp_path / "library").add(ebooks=ebook_paths)
+
+    books_metadata_expected = library.list()
+
+    library_sql = CalibreSql(library_path=library.library_path)
+
+    # library_sql._list_all_tables()
+
+    books_metadata = library_sql.list()
+
+    assert books_metadata_expected == books_metadata
