@@ -28,6 +28,8 @@ class CalibreSql(CalibreLibrary):
                 query += ", authors.name"
             elif field == CalibreField.title:
                 query += ", books.title"
+            elif field == CalibreField.timestamp:
+                query += ", books.timestamp"
             else:
                 raise ValueError(f"Field not supported : {field}")
 
@@ -50,6 +52,12 @@ class CalibreSql(CalibreLibrary):
             data = {"id": row[0]}
             for idx, field in enumerate(fields):
                 data[field.value] = row[idx + 1]
-            res_parsed.append(BookMetadata.model_validate(data))
+            book_metadata = BookMetadata.model_validate(data)
+
+            if book_metadata.timestamp is not None:
+                # Remove microsecond to be aligned with calibredb
+                book_metadata.timestamp = book_metadata.timestamp.replace(microsecond=0)
+
+            res_parsed.append(book_metadata)
 
         return res_parsed

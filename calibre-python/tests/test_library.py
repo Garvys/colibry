@@ -52,7 +52,15 @@ def test_clone(tmp_path: Path, ebook_paths: List[Path]):
     assert len(library2.list()) == len(ebook_paths)
 
 
-@pytest.mark.parametrize("fields", [[CalibreField.title], [CalibreField.authors]])
+@pytest.mark.parametrize(
+    "fields",
+    [
+        [CalibreField.title],
+        [CalibreField.authors],
+        [CalibreField.authors, CalibreField.title],
+        [CalibreField.title, CalibreField.timestamp],
+    ],
+)
 def test_new_add_list_sql(
     tmp_path: Path, ebook_paths: List[Path], fields: List[CalibreField]
 ):
