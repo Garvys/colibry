@@ -1,8 +1,10 @@
-from calibre.calibredb import CalibreDB
-from calibre.calibre_sql import CalibreSql
-from calibre.objects import CalibreField
 from pathlib import Path
 from typing import List
+
+import pytest
+from calibre.calibre_sql import CalibreSql
+from calibre.calibredb import CalibreDB
+from calibre.objects import CalibreField
 
 
 def test_new_add_list(tmp_path: Path, ebook_paths: List[Path]):
@@ -50,17 +52,18 @@ def test_clone(tmp_path: Path, ebook_paths: List[Path]):
     assert len(library2.list()) == len(ebook_paths)
 
 
-def test_new_add_list_sql(tmp_path: Path, ebook_paths: List[Path]):
+@pytest.mark.parametrize("fields", [[CalibreField.title], [CalibreField.authors]])
+def test_new_add_list_sql(
+    tmp_path: Path, ebook_paths: List[Path], fields: List[CalibreField]
+):
     library = CalibreDB.new_empty_library(tmp_path / "library").add(ebooks=ebook_paths)
-
-    fields = [CalibreField.title]
 
     books_metadata_expected = library.list(fields=fields)
 
     library_sql = CalibreSql(library_path=library.library_path)
 
-    # library_sql._list_all_tables()
+    books_metadata = library_sql.list(fields=fields)
 
-    books_metadata = library_sql.list()
-
-    assert books_metadata_expected == books_metadata
+    assert (
+        books_metadata_expected == books_metadata
+    ), f"calibreDB = {books_metadata_expected} calibresql {books_metadata}"
