@@ -11,7 +11,7 @@ from pydantic import TypeAdapter
 
 from calibre.calibre_library import CalibreLibrary
 from calibre.errors import CalibreRuntimeError
-from calibre.objects import BookMetadata, LibraryId
+from calibre.objects import BookMetadata, CalibreField
 
 logger = logging.getLogger(__name__)
 
@@ -58,27 +58,11 @@ class CalibreDB(CalibreLibrary):
 
         return self
 
-    def list(
-        self,
-        limit: Optional[int] = None,
-        sort_by: Optional[str] = None,
-        ascending: bool = False,
-        search: str = "",
-    ) -> List[BookMetadata]:
-        cmd = [
-            "list",
-            "--for-machine",
-            "--fields",
-            "authors,title,cover,formats,series,series_index,timestamp",
-        ]
-        if limit is not None:
-            cmd += ["--limit", str(limit)]
-        if sort_by is not None:
-            cmd += ["--sort-by", sort_by]
-        if ascending:
-            cmd += ["--ascending"]
-        if search:
-            cmd += ["--search", search]
+    def list(self, fields: List[CalibreField]) -> List[BookMetadata]:
+        if not fields:
+            raise ValueError("Can't list books if no fields are provided")
+
+        cmd = ["list", "--for-machine", "--fields", ",".join(fields)]
         res = self._run_calibredb(cmd)
 
         return TypeAdapter(List[BookMetadata]).validate_python(json.loads(res))
@@ -90,7 +74,7 @@ class CalibreDB(CalibreLibrary):
         )
         return [e.authors for e in books_metadata if e.authors]
 
-    def remove_from_ids(self, ids: List[LibraryId]) -> CalibreDB:
+    def remove_from_ids(self, ids: List[int]) -> CalibreDB:
         self._run_calibredb(["remove", ",".join([str(e) for e in ids])])
 
         return self

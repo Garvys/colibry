@@ -27,7 +27,7 @@ class CalibreSql(CalibreLibrary):
     ) -> List[BookMetadata]:
         connection = sqlite3.connect(self.library_path / "metadata.db")
         cur = connection.cursor()
-        res = cur.execute("SELECT title FROM books")
+        res = cur.execute("SELECT id, title FROM books")
         res = res.fetchall()
         print(res)
-        return [BookMetadata(title=e[0]) for e in res]
+        return [BookMetadata(id=e[0], title=e[1]) for e in res]
