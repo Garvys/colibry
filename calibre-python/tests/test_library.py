@@ -59,6 +59,7 @@ def test_clone(tmp_path: Path, ebook_paths: List[Path]):
         [CalibreField.authors],
         [CalibreField.authors, CalibreField.title],
         [CalibreField.title, CalibreField.timestamp],
+        [CalibreField.title, CalibreField.series_index]
     ],
 )
 def test_new_add_list_sql(

@@ -30,6 +30,8 @@ class CalibreSql(CalibreLibrary):
                 query += ", books.title"
             elif field == CalibreField.timestamp:
                 query += ", books.timestamp"
+            elif field == CalibreField.series_index:
+                query += ", books.series_index"
             else:
                 raise ValueError(f"Field not supported : {field}")
 
