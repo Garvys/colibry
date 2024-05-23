@@ -32,6 +32,8 @@ class CalibreSql(CalibreLibrary):
                 query += ", books.timestamp"
             elif field == CalibreField.series_index:
                 query += ", books.series_index"
+            elif field == CalibreField.cover:
+                query += ", books.path"
             else:
                 raise ValueError(f"Field not supported : {field}")
 
@@ -53,7 +55,15 @@ class CalibreSql(CalibreLibrary):
         for row in res:
             data = {"id": row[0]}
             for idx, field in enumerate(fields):
-                data[field.value] = row[idx + 1]
+                if field == CalibreField.cover:
+                    v = row[idx+1]
+                    if v:
+                        v = self.library_path / v / "cover.jpg"
+                        if not v.exists():
+                            v = None
+                    data["cover"] = v
+                else:
+                    data[field.value] = row[idx + 1]
             book_metadata = BookMetadata.model_validate(data)
 
             if book_metadata.timestamp is not None:
