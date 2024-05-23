@@ -74,7 +74,8 @@ def library_calibresql(library_calibredb):
         [CalibreField.authors, CalibreField.title],
         [CalibreField.title, CalibreField.timestamp],
         [CalibreField.title, CalibreField.series_index],
-        [CalibreField.title, CalibreField.cover]
+        [CalibreField.title, CalibreField.cover],
+        [CalibreField.title, CalibreField.series]
     ],
 )
 def test_new_add_list_sql(

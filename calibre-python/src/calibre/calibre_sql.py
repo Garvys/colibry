@@ -34,6 +34,8 @@ class CalibreSql(CalibreLibrary):
                 query += ", books.series_index"
             elif field == CalibreField.cover:
                 query += ", books.path"
+            elif field == CalibreField.series:
+                query += ", series.name"
             else:
                 raise ValueError(f"Field not supported : {field}")
 
@@ -43,6 +45,12 @@ class CalibreSql(CalibreLibrary):
                 " LEFT JOIN books_authors_link on books.id = books_authors_link.book"
             )
             query += " LEFT JOIN authors on books_authors_link.author = authors.id"
+
+        if CalibreField.series in fields:
+            query += (
+                " LEFT JOIN books_series_link on books.id = books_series_link.book"
+            )
+            query += " LEFT JOIN series on books_series_link.series = series.id"
 
         query += " ORDER BY books.id"
 
