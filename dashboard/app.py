@@ -15,6 +15,7 @@ app = Dash(
     server=server,
     use_pages=True,
     external_stylesheets=[dbc.themes.COSMO, dbc.icons.BOOTSTRAP, dbc_css],
+    suppress_callback_exceptions=True
 )
 
 

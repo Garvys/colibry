@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 
@@ -85,7 +85,7 @@ def book_metadata_internal_to_external(
     if CalibreField.timestamp in fields:
         if internal.timestamp is not None:
             # Remove microsecond to be aligned with calibredb
-            timestamp = internal.timestamp.replace(microsecond=0, tzinfo=None)
+            timestamp = internal.timestamp.replace(microsecond=0, tzinfo=timezone.utc)
 
     series_index = None
     if CalibreField.series_index in fields:

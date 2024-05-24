@@ -9,7 +9,7 @@ from app_config import APP_CONFIG
 from calibre.calibredb import BookMetadata
 from dash import Input, Output, State, callback, dcc, html
 
-dash.register_page(__name__, path="/", name="home")
+dash.register_page(__name__, path="/", name="Home")
 logger = logging.getLogger(__name__)
 
 
@@ -30,7 +30,7 @@ def display_library(books_metadata):
 
         text = ""
         if entry.series:
-            text += f"{entry.series}#{entry.series_index}"
+            text += f"{entry.series} ({entry.series_index})"
 
         card = dbc.Card(
             [
