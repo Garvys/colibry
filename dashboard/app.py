@@ -15,7 +15,7 @@ app = Dash(
     server=server,
     use_pages=True,
     external_stylesheets=[dbc.themes.COSMO, dbc.icons.BOOTSTRAP, dbc_css],
-    suppress_callback_exceptions=True
+    suppress_callback_exceptions=True,
 )
 
 
@@ -65,7 +65,7 @@ navbar = dbc.Navbar(
                     dbc.Col(
                         dbc.NavbarBrand(
                             html.Img(src="assets/Colibry.svg", height="40px"),
-                            href="/home",
+                            href="/",
                         ),
                         align="center",
                         className="g-0",
