@@ -93,7 +93,7 @@ app.layout = html.Div([dcc.Store(id="library"), navbar, dash.page_container])
 def load_library(_n_clicks):
     logger.info("Loading library...")
     calibre_library = CalibreDB(APP_CONFIG.library_path)
-    books_metadata = calibre_library.list()
+    books_metadata = calibre_library.list_books()
 
     return [e.model_dump_json() for e in books_metadata]
 

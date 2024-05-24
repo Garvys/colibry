@@ -1,14 +1,22 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 from calibre.calibre_library import CalibreLibrary
-from calibre.objects import BookMetadata, CalibreField
+from calibre.objects import (
+    BookMetadata,
+    CalibreField,
+    InternalCalibreField,
+    InternalBookMetadata,
+    calibre_field_external_to_internals,
+    book_metadata_internal_to_external,
+)
 import sqlite3
 
-class Concatenate:
-    '''String concatenation aggregator for sqlite'''
 
-    def __init__(self, sep=','):
+class Concatenate:
+    """String concatenation aggregator for sqlite"""
+
+    def __init__(self, sep=","):
         self.sep = sep
         self.ans = []
 
@@ -23,12 +31,15 @@ class Concatenate:
             return self.sep.join(self.ans)
         except Exception:
             import traceback
+
             traceback.print_exc()
             raise
 
+
 class SortedConcatenate:
-    '''String concatenation aggregator for sqlite, sorted by supplied index'''
-    sep = ','
+    """String concatenation aggregator for sqlite, sorted by supplied index"""
+
+    sep = " & "
 
     def __init__(self):
         self.ans = {}
@@ -44,6 +55,7 @@ class SortedConcatenate:
             return self.sep.join(map(self.ans.get, sorted(self.ans.keys())))
         except Exception:
             import traceback
+
             traceback.print_exc()
             raise
 
@@ -53,8 +65,8 @@ class CalibreSql(CalibreLibrary):
         super().__init__(library_path=library_path)
 
         self.connection = sqlite3.connect(self.library_path / "metadata.db")
-        self.connection.create_aggregate('sortconcat', 2, SortedConcatenate)
-        self.connection.create_aggregate('concat', 1, Concatenate)
+        self.connection.create_aggregate("sortconcat", 2, SortedConcatenate)
+        self.connection.create_aggregate("concat", 1, Concatenate)
 
     def _list_all_tables(self):
         cursor = self.connection.cursor()
@@ -63,45 +75,25 @@ class CalibreSql(CalibreLibrary):
 
         print(res.fetchall())
 
-    def list(self, fields: List[CalibreField]) -> List[BookMetadata]:
+    def list_books(self, fields: List[CalibreField]) -> List[BookMetadata]:
         cur = self.connection.cursor()
 
-        query = "SELECT id"
+        # Turn the list of public fields to the list of internal ones
+        internal_fields = [InternalCalibreField.id, InternalCalibreField.title]
         for field in fields:
-            if field == CalibreField.authors:
-                query += ", authors"
-            elif field == CalibreField.title:
-                query += ", title"
-            elif field == CalibreField.timestamp:
-                query += ", books.timestamp"
-            elif field == CalibreField.series_index:
-                query += ", books.series_index"
-            elif field == CalibreField.cover:
-                query += ", books.path"
-            elif field == CalibreField.series:
-                query += ", series.name"
-            elif field == CalibreField.formats:
-                query += ", formats"
+            internal_fields.extend(calibre_field_external_to_internals(field))
+
+        # Remove potential duplicates
+        internal_fields = list(set(internal_fields))
+
+        query = "SELECT "
+        first = True
+        for internal_field in internal_fields:
+            if first:
+                query += f" {internal_field.value}"
+                first = False
             else:
-                raise ValueError(f"Field not supported : {field}")
-
-        # query += " FROM books"
-        # if CalibreField.authors in fields:
-        #     query += (
-        #         " LEFT JOIN books_authors_link on books.id = books_authors_link.book"
-        #     )
-        #     query += " LEFT JOIN authors on books_authors_link.author = authors.id"
-
-        # if CalibreField.series in fields:
-        #     query += (
-        #         " LEFT JOIN books_series_link on books.id = books_series_link.book"
-        #     )
-        #     query += " LEFT JOIN series on books_series_link.series = series.id"
-
-        # if CalibreField.formats in fields:
-        #     query += (
-        #         " LEFT JOIN data on books.id = data.book"
-        #     )
+                query += f", {internal_field.value}"
 
         query += " FROM meta"
 
@@ -114,22 +106,16 @@ class CalibreSql(CalibreLibrary):
 
         res_parsed = []
         for row in res:
-            data = {"id": row[0]}
-            for idx, field in enumerate(fields):
-                if field == CalibreField.cover:
-                    v = row[idx+1]
-                    if v:
-                        v = self.library_path / v / "cover.jpg"
-                        if not v.exists():
-                            v = None
-                    data["cover"] = v
-                else:
-                    data[field.value] = row[idx + 1]
-            book_metadata = BookMetadata.model_validate(data)
+            data = {}
+            for idx, field in enumerate(internal_fields):
+                data[field.value] = row[idx]
+            internal_book_metadata = InternalBookMetadata.model_validate(data)
 
-            if book_metadata.timestamp is not None:
-                # Remove microsecond to be aligned with calibredb
-                book_metadata.timestamp = book_metadata.timestamp.replace(microsecond=0)
+            book_metadata = book_metadata_internal_to_external(
+                internal=internal_book_metadata,
+                library_path=self.library_path,
+                fields=fields,
+            )
 
             res_parsed.append(book_metadata)
 

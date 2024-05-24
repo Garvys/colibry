@@ -48,18 +48,21 @@ def test_clone(tmp_path: Path, ebook_paths: List[Path]):
 
     library2 = library1.clone(tmp_path / "library2").add(ebook_paths)
 
-    assert len(library1.list()) == 0
+    assert len(library1.list_books()) == 0
     assert len(library2.list()) == len(ebook_paths)
+
 
 @pytest.fixture(scope="session")
 def library_calibredb(ebook_paths: List[Path]):
     from tempfile import TemporaryDirectory
+
     tmp = TemporaryDirectory()
 
     db = CalibreDB.new_empty_library(Path(tmp.name) / "library").add(ebooks=ebook_paths)
     # Attach tmp so that it gets removed when the db is destroyed
     db.tmp = tmp
     return db
+
 
 @pytest.fixture(scope="session")
 def library_calibresql(library_calibredb):
@@ -69,23 +72,23 @@ def library_calibresql(library_calibredb):
 @pytest.mark.parametrize(
     "fields",
     [
-        [CalibreField.title],
+        [],
         [CalibreField.authors],
-        [CalibreField.authors, CalibreField.title],
-        [CalibreField.title, CalibreField.timestamp],
-        [CalibreField.title, CalibreField.series_index],
-        [CalibreField.title, CalibreField.cover],
-        [CalibreField.title, CalibreField.series],
-        [CalibreField.title, CalibreField.formats]
+        [CalibreField.timestamp],
+        [CalibreField.series_index],
+        [CalibreField.cover],
+        [CalibreField.series],
+        [CalibreField.formats],
     ],
 )
 def test_new_add_list_sql(
-    library_calibredb, library_calibresql, fields: List[CalibreField]
+    library_calibredb: CalibreDB,
+    library_calibresql: CalibreSql,
+    fields: List[CalibreField],
 ):
+    books_metadata_expected = library_calibredb.list_books(fields=fields)
 
-    books_metadata_expected = library_calibredb.list(fields=fields)
-
-    books_metadata = library_calibresql.list(fields=fields)
+    books_metadata = library_calibresql.list_books(fields=fields)
 
     assert (
         books_metadata_expected == books_metadata
