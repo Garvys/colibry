@@ -85,7 +85,7 @@ def book_metadata_internal_to_external(
     if CalibreField.timestamp in fields:
         if internal.timestamp is not None:
             # Remove microsecond to be aligned with calibredb
-            timestamp = internal.timestamp.replace(microsecond=0)
+            timestamp = internal.timestamp.replace(microsecond=0, tzinfo=None)
 
     series_index = None
     if CalibreField.series_index in fields:
