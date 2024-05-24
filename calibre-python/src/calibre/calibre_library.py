@@ -23,5 +23,5 @@ class CalibreLibrary:
         return cls(library_path=new_library_path)
 
     @abstractmethod
-    def list_books(self, fields: List[CalibreField]) -> List[BookMetadata]:
+    def list_books(self, fields: List[CalibreField] = []) -> List[BookMetadata]:
         raise NotImplementedError

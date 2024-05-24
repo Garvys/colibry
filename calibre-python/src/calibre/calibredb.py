@@ -59,7 +59,7 @@ class CalibreDB(CalibreLibrary):
 
         return self
 
-    def list_books(self, fields: List[CalibreField]) -> List[BookMetadata]:
+    def list_books(self, fields: List[CalibreField] = []) -> List[BookMetadata]:
         fields = deepcopy(fields)
         fields.append("id")
         fields.append("title")

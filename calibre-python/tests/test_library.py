@@ -9,38 +9,29 @@ from calibre.objects import CalibreField
 
 def test_new_add_list(tmp_path: Path, ebook_paths: List[Path]):
     library = CalibreDB.new_empty_library(tmp_path / "library").add(ebooks=ebook_paths)
-    books_metadata = library.list()
+    books_metadata = library.list_books()
 
     assert len(books_metadata) == len(ebook_paths)
-
-    books_metadata = library.list(limit=1)
-
-    assert len(books_metadata) == 1
-
-    authors = library.list_authors()
-    books_metadata = library.list(search=f'author:"{authors[0]}"')
-    assert len(books_metadata) == 1
-    assert books_metadata[0].authors == authors[0]
 
 
 def test_remove_books(tmp_path: Path, ebook_paths: List[Path]):
     library = CalibreDB.new_empty_library(tmp_path / "library").add(ebooks=ebook_paths)
 
-    books_metadata = library.list()
+    books_metadata = library.list_books()
 
     library.remove_books(books_metadata[:2])
 
-    assert len(library.list()) == len(ebook_paths) - 2
+    assert len(library.list_books()) == len(ebook_paths) - 2
 
 
 def test_remove_from_ids(tmp_path: Path, ebook_paths: List[Path]):
     library = CalibreDB.new_empty_library(tmp_path / "library").add(ebooks=ebook_paths)
 
-    books_metadata = library.list()
+    books_metadata = library.list_books()
 
     library.remove_from_ids([e.id for e in books_metadata][:2])
 
-    assert len(library.list()) == len(ebook_paths) - 2
+    assert len(library.list_books()) == len(ebook_paths) - 2
 
 
 def test_clone(tmp_path: Path, ebook_paths: List[Path]):
@@ -49,7 +40,7 @@ def test_clone(tmp_path: Path, ebook_paths: List[Path]):
     library2 = library1.clone(tmp_path / "library2").add(ebook_paths)
 
     assert len(library1.list_books()) == 0
-    assert len(library2.list()) == len(ebook_paths)
+    assert len(library2.list_books()) == len(ebook_paths)
 
 
 @pytest.fixture(scope="session")

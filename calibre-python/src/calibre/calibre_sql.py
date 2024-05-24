@@ -75,7 +75,7 @@ class CalibreSql(CalibreLibrary):
 
         print(res.fetchall())
 
-    def list_books(self, fields: List[CalibreField]) -> List[BookMetadata]:
+    def list_books(self, fields: List[CalibreField] = []) -> List[BookMetadata]:
         cur = self.connection.cursor()
 
         # Turn the list of public fields to the list of internal ones
@@ -99,10 +99,8 @@ class CalibreSql(CalibreLibrary):
 
         query += " ORDER BY id"
 
-        print(query)
         res = cur.execute(query)
         res = res.fetchall()
-        print(res)
 
         res_parsed = []
         for row in res:
