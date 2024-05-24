@@ -5,12 +5,14 @@ import logging
 import subprocess
 import threading
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Union
 
 from pydantic import TypeAdapter
 
+from calibre.calibre_library import CalibreLibrary
 from calibre.errors import CalibreRuntimeError
-from calibre.objects import BookMetadata, LibraryId
+from calibre.objects import BookMetadata, CalibreField
+from copy import deepcopy
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +26,9 @@ def run_shell(cmd):
     return res.stdout
 
 
-class CalibreDB:
+class CalibreDB(CalibreLibrary):
     def __init__(self, library_path: Union[Path, str]):
-        if isinstance(library_path, Path) and not library_path.exists():
-            raise ValueError(f"Library not found : {library_path}")
-        self.library_path = library_path
+        super().__init__(library_path=library_path)
 
         # Concurrent access to calibre are forbidden by the calibredb CLI
         self.mutex = threading.Lock()
@@ -49,22 +49,6 @@ class CalibreDB:
 
         return res
 
-    @classmethod
-    def new_empty_library(cls, new_library_path: Path) -> CalibreDB:
-        path_empty_library = Path(__file__).resolve().parent / "empty_library"
-
-        run_shell(
-            [
-                "calibredb",
-                "--with-library",
-                str(path_empty_library),
-                "clone",
-                str(new_library_path),
-            ]
-        )
-
-        return cls(library_path=new_library_path)
-
     def clone(self, new_library_path: Path) -> CalibreDB:
         self._run_calibredb(["clone", str(new_library_path)])
 
@@ -75,27 +59,12 @@ class CalibreDB:
 
         return self
 
-    def list(
-        self,
-        limit: Optional[int] = None,
-        sort_by: Optional[str] = None,
-        ascending: bool = False,
-        search: str = "",
-    ) -> List[BookMetadata]:
-        cmd = [
-            "list",
-            "--for-machine",
-            "--fields",
-            "authors,title,cover,formats,series,series_index,timestamp",
-        ]
-        if limit is not None:
-            cmd += ["--limit", str(limit)]
-        if sort_by is not None:
-            cmd += ["--sort-by", sort_by]
-        if ascending:
-            cmd += ["--ascending"]
-        if search:
-            cmd += ["--search", search]
+    def list_books(self, fields: List[CalibreField] = []) -> List[BookMetadata]:
+        fields = deepcopy(fields)
+        fields.append("id")
+        fields.append("title")
+
+        cmd = ["list", "--for-machine", "--fields", ",".join(fields)]
         res = self._run_calibredb(cmd)
 
         return TypeAdapter(List[BookMetadata]).validate_python(json.loads(res))
@@ -107,7 +76,7 @@ class CalibreDB:
         )
         return [e.authors for e in books_metadata if e.authors]
 
-    def remove_from_ids(self, ids: List[LibraryId]) -> CalibreDB:
+    def remove_from_ids(self, ids: List[int]) -> CalibreDB:
         self._run_calibredb(["remove", ",".join([str(e) for e in ids])])
 
         return self

@@ -3,7 +3,7 @@ import logging
 import dash
 import dash_bootstrap_components as dbc
 from app_config import APP_CONFIG
-from calibre import CalibreDB
+from calibre import CalibreSql, CalibreField
 from dash import Dash, Input, Output, State, callback, dcc, html
 from flask import Flask, send_from_directory
 
@@ -15,6 +15,7 @@ app = Dash(
     server=server,
     use_pages=True,
     external_stylesheets=[dbc.themes.COSMO, dbc.icons.BOOTSTRAP, dbc_css],
+    suppress_callback_exceptions=True,
 )
 
 
@@ -64,7 +65,7 @@ navbar = dbc.Navbar(
                     dbc.Col(
                         dbc.NavbarBrand(
                             html.Img(src="assets/Colibry.svg", height="40px"),
-                            href="/home",
+                            href="/",
                         ),
                         align="center",
                         className="g-0",
@@ -92,8 +93,17 @@ app.layout = html.Div([dcc.Store(id="library"), navbar, dash.page_container])
 @callback(Output("library", "data"), Input("reload-library", "n_clicks"))
 def load_library(_n_clicks):
     logger.info("Loading library...")
-    calibre_library = CalibreDB(APP_CONFIG.library_path)
-    books_metadata = calibre_library.list()
+    calibre_library = CalibreSql(APP_CONFIG.library_path)
+    books_metadata = calibre_library.list_books(
+        fields=[
+            CalibreField.authors,
+            CalibreField.cover,
+            CalibreField.formats,
+            CalibreField.series,
+            CalibreField.series_index,
+            CalibreField.timestamp,
+        ]
+    )
 
     return [e.model_dump_json() for e in books_metadata]
 
