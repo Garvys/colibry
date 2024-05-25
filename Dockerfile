@@ -6,7 +6,7 @@ COPY requirements.txt /app/requirements.txt
 COPY calibre-python /app/calibre-python
 
 WORKDIR /app/
-RUN apk update && apk add cmake && pip install -r requirements.txt
+RUN apk update && apk add cmake gcc && pip install -r requirements.txt
 
 COPY dashboard /app/dashboard
 
