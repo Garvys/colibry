@@ -52,7 +52,7 @@ jobs:
           - platform: linux/arm/v7
             dockerfile: Dockerfile-armv7
 
-    if: ${{ github.ref == 'refs/heads/main' || matrix.platform  != "linux/arm/v7" }}
+    # if: ${{ github.ref == 'refs/heads/main' || matrix.platform  != "linux/arm/v7" }}
     steps:
       - name: Prepare
         run: |
