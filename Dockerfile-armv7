@@ -1,17 +1,17 @@
-FROM python:3.9-slim as colibry-build
+FROM python:3.9-alpine as colibry-build
 
 COPY requirements.txt /app/requirements.txt
 COPY calibre-python /app/calibre-python
 
 WORKDIR /app/
 
-RUN apt-get update && \
-    apt-get install curl -y && \
+RUN apk update && \
+    apk add curl && \
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y && \
     . "$HOME/.cargo/env" && \
     pip install -r requirements.txt
 
-FROM python:3.9-slim as colibry
+FROM python:3.9-alpine as colibry
 
 ENV COLIBRY_LIBRARY_PATH="/app/library"
 
