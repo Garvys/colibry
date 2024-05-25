@@ -26,7 +26,5 @@ COPY dashboard /app/dashboard
 
 WORKDIR /app/dashboard
 
-RUN python app.py
-
 EXPOSE 8050
 CMD ["gunicorn", "-b", "0.0.0.0:8050", "--reload", "app:server"]
