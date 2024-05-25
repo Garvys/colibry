@@ -1,0 +1,30 @@
+FROM python:3.9-slim as colibry-build
+
+COPY requirements.txt /app/requirements.txt
+COPY calibre-python /app/calibre-python
+
+WORKDIR /app/
+
+RUN apt-get update && \
+    apt-get install curl -y && \
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y && \
+    . "$HOME/.cargo/env" && \
+    pip install -r requirements.txt
+
+FROM python:3.9-slim as colibry
+
+ENV COLIBRY_LIBRARY_PATH="/app/library"
+
+COPY requirements.txt /app/requirements.txt
+COPY calibre-python /app/calibre-python
+COPY --from=colibry-build /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
+
+WORKDIR /app/
+RUN pip list -v && pip install -r requirements.txt
+
+COPY dashboard /app/dashboard
+
+WORKDIR /app/dashboard
+
+EXPOSE 8050
+CMD ["gunicorn", "-b", "0.0.0.0:8050", "--reload", "app:server"]
