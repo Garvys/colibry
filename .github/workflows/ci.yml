@@ -44,10 +44,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          # - linux/arm/v7
-          - linux/arm64
+        include:
+          - platform: linux/amd64
+            dockerfile: Dockerfile
+          - platform: linux/arm64
+            dockerfile: Dockerfile
+          - platform: linux/arm/v7
+            dockerfile: Dockerfile-armv7
+
     steps:
       - name: Prepare
         run: |
@@ -79,6 +83,7 @@ jobs:
         id: build
         uses: docker/build-push-action@v5
         with:
+          file: ${{ matrix.dockerfile}}
           context: .
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
