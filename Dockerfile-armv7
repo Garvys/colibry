@@ -10,9 +10,8 @@ RUN apt-get update && \
     apt-get install curl -y && \
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y && \
     . "$HOME/.cargo/env" && \
-    rustup --version && \
     pip install -r requirements.txt && \
-    rustup self uninstall && \
+    rustup self uninstall -y && \
     apt-get remove curl -y && \
     apt-get autoremove -y && \
     apt-get clean -y
