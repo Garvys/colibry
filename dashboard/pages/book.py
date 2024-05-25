@@ -1,21 +1,101 @@
 import dash
-from dash import html
+from dash import html, callback, dash_table
 from app_config import APP_CONFIG
-from calibre.calibredb import CalibreDB
+from calibre import CalibreSql, CalibreField, BookMetadata
+from pathlib import Path
+import dash_bootstrap_components as dbc
+from urllib.parse import quote as urlquote
 
 
-dash.register_page(__name__, path_template="/book/<calibre_id>")
+dash.register_page(__name__, path_template="/book/<book_id>")
 
 
-def layout(calibre_id: str = 0, **kwargs):
-    library = CalibreDB(APP_CONFIG.library_path)
-    res = library.list_books(search=f"id:{calibre_id}")
-    if len(res) == 0:
-        return html.Div([html.P(f"No book with ID {calibre_id}")])
-    elif len(res) > 1:
-        return html.Div(
-            [html.P(f"Error: Multiple books with ID {calibre_id} -> {res}")]
+def generate_table(book: BookMetadata) -> dbc.Table:
+    data = [
+        ("id", book.id, False),
+        ("title", book.title, True),
+        ("authors", book.authors, True),
+        ("series", book.series, True),
+        ("series_index", book.series_index, True),
+        ("timestamp", book.timestamp, False),
+    ]
+    trs = []
+    for e in data:
+        edit_button = html.Div([])
+        if e[2]:
+            edit_button = dbc.Button(
+                html.I(className="bi bi-pencil"),
+                className="ms-2",
+                color="light",
+                size="sm",
+                style={"background-color": "#ffffff", "border-color": "#ffffff"},
+            )
+        trs.append(
+            html.Tr(
+                [
+                    html.Td(children=e[0]),
+                    html.Td(children=[e[1], edit_button]),
+                ]
+            )
         )
+    return dbc.Table(html.Tbody(trs), bordered=True, hover=True, responsive=True)
 
-    return html.Div(html.P(res[0].model_dump_json()))
+
+def layout(book_id: str = 0, **kwargs):
+    lib = CalibreSql(APP_CONFIG.library_path)
+    books = lib.list_books(
+        fields=[
+            CalibreField.cover,
+            CalibreField.authors,
+            CalibreField.series,
+            CalibreField.series_index,
+            CalibreField.timestamp,
+        ]
+    )
+    print(books)
+    # Create a new endpoint to avoid this
+    book = None
+    for b in books:
+        if b.id == int(book_id):
+            book = b
+            print("Book found !")
+            break
+    else:
+        raise ValueError("Book not found")
+
+    cover_path = Path(book.cover).relative_to(APP_CONFIG.library_path)
+
+    return html.Div(
+        [
+            dbc.Row(
+                dbc.Col(
+                    [
+                        html.H1(book.title),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    html.Img(
+                                        src=f"/download-from-library/{urlquote(str(cover_path))}",
+                                        className="img-responsive rounded",
+                                        style={"max-width": "100%"},
+                                    ),
+                                    className="col-md-4",
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.H4("Metadata"),
+                                        generate_table(book),
+                                        dbc.Button("Download Ebook"),
+                                    ],
+                                    className="col-md-8",
+                                ),
+                            ]
+                        ),
+                    ],
+                    width={"size": 10, "offset": 1},
+                )
+            )
+        ],
+        className="m-2",
+    )
     # extract_library_metadata()
