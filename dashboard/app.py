@@ -64,7 +64,7 @@ navbar = dbc.Navbar(
                     # ),
                     dbc.Col(
                         dbc.NavbarBrand(
-                            html.Img(src="assets/Colibry.svg", height="40px"),
+                            html.Img(src="/assets/Colibry.svg", height="40px"),
                             href="/",
                         ),
                         align="center",
