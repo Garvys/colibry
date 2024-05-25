@@ -49,7 +49,7 @@ jobs:
             dockerfile: Dockerfile
           - platform: linux/arm64
             dockerfile: Dockerfile
-          - platform: linux/armv7
+          - platform: linux/arm/v7
             dockerfile: Dockerfile-armv7
     steps:
       - name: Prepare
