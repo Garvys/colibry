@@ -1,12 +1,13 @@
-import dash
-from dash import html
-from app_config import APP_CONFIG
-from calibre import CalibreSql, CalibreField, BookMetadata, SearchParams, EqualityFilter
+import os
 from pathlib import Path
-import dash_bootstrap_components as dbc
 from urllib.parse import quote as urlquote
-from core.download import ebook_download_link
 
+import dash
+import dash_bootstrap_components as dbc
+from app_config import APP_CONFIG
+from calibre import BookMetadata, CalibreField, CalibreSql, EqualityFilter, SearchParams
+from core.download import ebook_download_link
+from dash import html
 
 dash.register_page(__name__, path_template="/book/<book_id>")
 
@@ -40,6 +41,52 @@ def generate_table(book: BookMetadata) -> dbc.Table:
             )
         )
     return dbc.Table(html.Tbody(trs), bordered=True, hover=True, responsive=True)
+
+
+def generate_download_buttons(book: BookMetadata):
+    if book.formats:
+        rows = []
+        for format in book.formats:
+            file_stats = os.stat(format)
+            rows.append(
+                html.Tr(
+                    [
+                        html.Td(format.name),
+                        html.Td(f"{file_stats.st_size / (1024 * 1024):0,.2f} Mb"),
+                        html.Td(
+                            dbc.Button(
+                                html.I(className="bi bi-download"),
+                                href=ebook_download_link(
+                                    "",
+                                    library_path=APP_CONFIG.library_path,
+                                    ebook_path=format,
+                                ),
+                                external_link=True,
+                                color="light",
+                                size="sm",
+                                style={
+                                    "backgroundColor": "#ffffff",
+                                    "borderColor": "#ffffff",
+                                },
+                            )
+                        ),
+                    ]
+                )
+            )
+
+        return dbc.Table(
+            [
+                html.Thead(
+                    html.Tr([html.Th("Filename"), html.Th("Size"), html.Th("Link")])
+                ),
+                html.Tbody(rows),
+            ],
+            bordered=True,
+            hover=True,
+            responsive=True,
+        )
+    else:
+        return html.P("No files found!")
 
 
 def layout(book_id: str = 0, **kwargs):
@@ -83,15 +130,8 @@ def layout(book_id: str = 0, **kwargs):
                                     [
                                         html.H4("Metadata"),
                                         generate_table(book),
-                                        dbc.Button(
-                                            "Download Ebook",
-                                            href=ebook_download_link(
-                                                "",
-                                                library_path=APP_CONFIG.library_path,
-                                                ebook_path=book.formats[0],
-                                            ),
-                                            external_link=True,
-                                        ),
+                                        html.H4("Files"),
+                                        generate_download_buttons(book),
                                     ],
                                     className="col-md-8",
                                 ),
