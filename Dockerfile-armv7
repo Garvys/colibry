@@ -6,7 +6,7 @@ COPY requirements.txt /app/requirements.txt
 COPY calibre-python /app/calibre-python
 
 WORKDIR /app/
-RUN apt-get update && apt-get install curl -y && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -y && pip install -r requirements.txt
+RUN apt-get update && apt-get install curl -y && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -- -y && pip install -r requirements.txt
 
 COPY dashboard /app/dashboard
 
