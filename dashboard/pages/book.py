@@ -1,5 +1,5 @@
 import dash
-from dash import html, callback, dash_table
+from dash import html
 from app_config import APP_CONFIG
 from calibre import CalibreSql, CalibreField, BookMetadata, SearchParams, EqualityFilter
 from pathlib import Path
