@@ -2,6 +2,5 @@ dash
 pydantic
 dash-bootstrap-components
 pydantic-settings
-dash-bootstrap-templates
 gunicorn
 -e file:./calibre-python#calibre
