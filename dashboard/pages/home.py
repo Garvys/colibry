@@ -32,7 +32,7 @@ def display_library(books_metadata):
                         className="rounded ebook-cover",
                         style={"height": "15rem"},
                     ),
-                    href=f"/book/{entry.id}"
+                    href=f"/book/{entry.id}",
                 ),
                 dbc.CardBody(
                     [
@@ -45,7 +45,7 @@ def display_library(books_metadata):
                                     "margin-bottom": "0.5rem",
                                 },
                             ),
-                            href=f"/book/{entry.id}"
+                            href=f"/book/{entry.id}",
                         ),
                         dcc.Link(
                             html.P(
@@ -54,7 +54,7 @@ def display_library(books_metadata):
                                     text,
                                 ]
                             ),
-                            href=f"/book/{entry.id}"
+                            href=f"/book/{entry.id}",
                         ),
                     ],
                     style={"padding": "0.5rem"},

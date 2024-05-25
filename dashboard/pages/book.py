@@ -1,7 +1,7 @@
 import dash
 from dash import html, callback, dash_table
 from app_config import APP_CONFIG
-from calibre import CalibreSql, CalibreField, BookMetadata
+from calibre import CalibreSql, CalibreField, BookMetadata, SearchParams, EqualityFilter
 from pathlib import Path
 import dash_bootstrap_components as dbc
 from urllib.parse import quote as urlquote
@@ -45,25 +45,21 @@ def generate_table(book: BookMetadata) -> dbc.Table:
 def layout(book_id: str = 0, **kwargs):
     lib = CalibreSql(APP_CONFIG.library_path)
     books = lib.list_books(
-        fields=[
-            CalibreField.cover,
-            CalibreField.authors,
-            CalibreField.series,
-            CalibreField.series_index,
-            CalibreField.timestamp,
-            CalibreField.formats
-        ]
+        params=SearchParams(
+            fields=[
+                CalibreField.cover,
+                CalibreField.authors,
+                CalibreField.series,
+                CalibreField.series_index,
+                CalibreField.timestamp,
+                CalibreField.formats,
+            ],
+            filters=[EqualityFilter.with_id(book_id)],
+        )
     )
-    print(books)
-    # Create a new endpoint to avoid this
-    book = None
-    for b in books:
-        if b.id == int(book_id):
-            book = b
-            print("Book found !")
-            break
-    else:
-        raise ValueError("Book not found")
+
+    # TODO: Add error check
+    book = books[0]
 
     cover_path = Path(book.cover).relative_to(APP_CONFIG.library_path)
 
@@ -89,8 +85,12 @@ def layout(book_id: str = 0, **kwargs):
                                         generate_table(book),
                                         dbc.Button(
                                             "Download Ebook",
-                                            href=ebook_download_link("", library_path=APP_CONFIG.library_path, ebook_path=book.formats[0]),
-                                            external_link=True
+                                            href=ebook_download_link(
+                                                "",
+                                                library_path=APP_CONFIG.library_path,
+                                                ebook_path=book.formats[0],
+                                            ),
+                                            external_link=True,
                                         ),
                                     ],
                                     className="col-md-8",

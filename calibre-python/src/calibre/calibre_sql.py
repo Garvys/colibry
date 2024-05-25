@@ -1,14 +1,16 @@
 from pathlib import Path
-from typing import List
+from typing import List, Dict, Any
 
 from calibre.calibre_library import CalibreLibrary
 from calibre.objects import (
     BookMetadata,
-    CalibreField,
     InternalCalibreField,
     InternalBookMetadata,
-    calibre_field_external_to_internals,
+)
+from calibre.search_params import SearchParams
+from calibre.converters import (
     book_metadata_internal_to_external,
+    calibre_field_external_to_internals,
 )
 import sqlite3
 
@@ -75,8 +77,9 @@ class CalibreSql(CalibreLibrary):
 
         print(res.fetchall())
 
-    def list_books(self, fields: List[CalibreField] = []) -> List[BookMetadata]:
+    def list_books(self, params: SearchParams = SearchParams()) -> List[BookMetadata]:
         cur = self.connection.cursor()
+        fields = params.fields
 
         # Turn the list of public fields to the list of internal ones
         internal_fields = [InternalCalibreField.id, InternalCalibreField.title]
@@ -96,6 +99,10 @@ class CalibreSql(CalibreLibrary):
                 query += f", {internal_field.value}"
 
         query += " FROM meta"
+
+        if params.filters:
+            for filter in params.filters:
+                query += f" WHERE {filter.to_sql_filter()}"
 
         query += " ORDER BY id"
 
