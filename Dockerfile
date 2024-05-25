@@ -1,4 +1,4 @@
-FROM python:3.9-slim as colibry
+FROM python:3.9-alpine as colibry
 
 ENV COLIBRY_LIBRARY_PATH="/app/library"
 
