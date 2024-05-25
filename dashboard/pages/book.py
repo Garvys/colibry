@@ -5,6 +5,7 @@ from calibre import CalibreSql, CalibreField, BookMetadata
 from pathlib import Path
 import dash_bootstrap_components as dbc
 from urllib.parse import quote as urlquote
+from core.download import ebook_download_link
 
 
 dash.register_page(__name__, path_template="/book/<book_id>")
@@ -28,7 +29,7 @@ def generate_table(book: BookMetadata) -> dbc.Table:
                 className="ms-2",
                 color="light",
                 size="sm",
-                style={"background-color": "#ffffff", "border-color": "#ffffff"},
+                style={"backgroundColor": "#ffffff", "borderColor": "#ffffff"},
             )
         trs.append(
             html.Tr(
@@ -50,6 +51,7 @@ def layout(book_id: str = 0, **kwargs):
             CalibreField.series,
             CalibreField.series_index,
             CalibreField.timestamp,
+            CalibreField.formats
         ]
     )
     print(books)
@@ -70,14 +72,14 @@ def layout(book_id: str = 0, **kwargs):
             dbc.Row(
                 dbc.Col(
                     [
-                        html.H1(book.title),
+                        html.H1(book.title, className="mt-4 mb-4"),
                         dbc.Row(
                             [
                                 dbc.Col(
                                     html.Img(
                                         src=f"/download-from-library/{urlquote(str(cover_path))}",
-                                        className="img-responsive rounded",
-                                        style={"max-width": "100%"},
+                                        className="img-responsive rounded ebook-cover",
+                                        style={"maxWidth": "100%"},
                                     ),
                                     className="col-md-4",
                                 ),
@@ -85,7 +87,11 @@ def layout(book_id: str = 0, **kwargs):
                                     [
                                         html.H4("Metadata"),
                                         generate_table(book),
-                                        dbc.Button("Download Ebook"),
+                                        dbc.Button(
+                                            "Download Ebook",
+                                            href=ebook_download_link("", library_path=APP_CONFIG.library_path, ebook_path=book.formats[0]),
+                                            external_link=True
+                                        ),
                                     ],
                                     className="col-md-8",
                                 ),
