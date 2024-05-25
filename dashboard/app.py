@@ -3,7 +3,7 @@ import logging
 import dash
 import dash_bootstrap_components as dbc
 from app_config import APP_CONFIG
-from calibre import CalibreSql, CalibreField
+from calibre import CalibreSql, CalibreField, SearchParams
 from dash import Dash, Input, Output, State, callback, dcc, html
 from flask import Flask, send_from_directory
 
@@ -57,14 +57,9 @@ navbar = dbc.Navbar(
         [
             dbc.Row(
                 [
-                    # dbc.Col(
-                    #     dcc.Link(
-                    #         html.Img(src="assets/logo.jpg", height="40px"), href="/home"
-                    #     )
-                    # ),
                     dbc.Col(
                         dbc.NavbarBrand(
-                            html.Img(src="assets/Colibry.svg", height="40px"),
+                            html.Img(src="/assets/Colibry.svg", height="40px"),
                             href="/",
                         ),
                         align="center",
@@ -95,14 +90,16 @@ def load_library(_n_clicks):
     logger.info("Loading library...")
     calibre_library = CalibreSql(APP_CONFIG.library_path)
     books_metadata = calibre_library.list_books(
-        fields=[
-            CalibreField.authors,
-            CalibreField.cover,
-            CalibreField.formats,
-            CalibreField.series,
-            CalibreField.series_index,
-            CalibreField.timestamp,
-        ]
+        params=SearchParams(
+            fields=[
+                CalibreField.authors,
+                CalibreField.cover,
+                CalibreField.formats,
+                CalibreField.series,
+                CalibreField.series_index,
+                CalibreField.timestamp,
+            ]
+        )
     )
 
     return [e.model_dump_json() for e in books_metadata]

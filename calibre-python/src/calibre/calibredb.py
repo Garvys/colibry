@@ -11,7 +11,8 @@ from pydantic import TypeAdapter
 
 from calibre.calibre_library import CalibreLibrary
 from calibre.errors import CalibreRuntimeError
-from calibre.objects import BookMetadata, CalibreField
+from calibre.objects import BookMetadata
+from calibre.search_params import SearchParams
 from copy import deepcopy
 
 logger = logging.getLogger(__name__)
@@ -59,12 +60,17 @@ class CalibreDB(CalibreLibrary):
 
         return self
 
-    def list_books(self, fields: List[CalibreField] = []) -> List[BookMetadata]:
-        fields = deepcopy(fields)
+    def list_books(self, params: SearchParams = SearchParams()) -> List[BookMetadata]:
+        fields = deepcopy(params.fields)
         fields.append("id")
         fields.append("title")
 
         cmd = ["list", "--for-machine", "--fields", ",".join(fields)]
+        if params.filters:
+            for filter in params.filters:
+                cmd.append("-s")
+                cmd.append(filter.to_calibredb_filter())
+
         res = self._run_calibredb(cmd)
 
         return TypeAdapter(List[BookMetadata]).validate_python(json.loads(res))

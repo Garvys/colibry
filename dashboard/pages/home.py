@@ -13,15 +13,6 @@ dash.register_page(__name__, path="/", name="Home")
 logger = logging.getLogger(__name__)
 
 
-def file_download_link(item, library_path: Path, formats: List[str]):
-    """Create a Plotly Dash 'A' element that downloads a file from the app."""
-    p = Path(formats[0])
-    p = p.relative_to(library_path)
-
-    location = "/download-from-library/{}".format(urlquote(str(p)))
-    return html.A(item, href=location)
-
-
 def display_library(books_metadata):
     cards = []
 
@@ -34,19 +25,18 @@ def display_library(books_metadata):
 
         card = dbc.Card(
             [
-                file_download_link(
-                    dbc.CardImg(
+                dcc.Link(
+                    children=dbc.CardImg(
                         src=f"/download-from-library/{urlquote(str(cover_path))}",
                         top=True,
-                        className=" rounded",
+                        className="rounded ebook-cover",
                         style={"height": "15rem"},
                     ),
-                    library_path=APP_CONFIG.library_path,
-                    formats=entry.formats,
+                    href=f"/book/{entry.id}",
                 ),
                 dbc.CardBody(
                     [
-                        file_download_link(
+                        dcc.Link(
                             html.P(
                                 entry.title,
                                 className="font-weight-bold",
@@ -55,24 +45,21 @@ def display_library(books_metadata):
                                     "margin-bottom": "0.5rem",
                                 },
                             ),
-                            library_path=APP_CONFIG.library_path,
-                            formats=entry.formats,
+                            href=f"/book/{entry.id}",
                         ),
-                        file_download_link(
+                        dcc.Link(
                             html.P(
                                 [
                                     html.Div(entry.authors, className="text-primary"),
                                     text,
                                 ]
                             ),
-                            library_path=APP_CONFIG.library_path,
-                            formats=entry.formats,
+                            href=f"/book/{entry.id}",
                         ),
                     ],
                     style={"padding": "0.5rem"},
                 ),
             ],
-            # className="p-2 m-2 rounded",
             className="h-100 border-0",
             style={"width": "10rem", "height": "50rem"},
         )

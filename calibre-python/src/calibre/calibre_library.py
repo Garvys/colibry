@@ -5,7 +5,8 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import List
 
-from calibre.objects import BookMetadata, CalibreField
+from calibre.objects import BookMetadata
+from calibre.search_params import SearchParams
 
 
 class CalibreLibrary:
@@ -23,5 +24,5 @@ class CalibreLibrary:
         return cls(library_path=new_library_path)
 
     @abstractmethod
-    def list_books(self, fields: List[CalibreField] = []) -> List[BookMetadata]:
+    def list_books(self, params: SearchParams = SearchParams()) -> List[BookMetadata]:
         raise NotImplementedError
