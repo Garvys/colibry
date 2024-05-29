@@ -1,6 +1,13 @@
 from pathlib import Path
 import shutil
 import sqlite3
+from pydantic import BaseModel
+
+class AuthorMetadata(BaseModel):
+    id: int
+    name: str
+    sort: str
+
 
 class MetadataDB:
 
@@ -17,7 +24,14 @@ class MetadataDB:
     
     def list_authors(self):
         cursor = self.connection.cursor()
-        res = cursor.execute("SELECT * FROM authors")
+        res = cursor.execute("SELECT id, name, sort FROM authors")
         res = res.fetchall()
-        return res
+        res_parsed = []
+        for e in res:
+            res_parsed.append(AuthorMetadata(id=e[0], name=e[1], sort=e[2]))
+        return res_parsed
+    
+    def add_author(self, author_name: str) -> int:
+        cursor = self.connection.cursor()
+        cursor.execute(f"INSERT OR IGNORE INTO authors (name, sort) VALUES ('{author_name}', '{author_name}')")
 
