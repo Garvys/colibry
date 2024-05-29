@@ -30,6 +30,8 @@ def download_from_library(path):
 
 navbar_right = dbc.Nav(
     [
+        dbc.NavItem(dbc.NavLink("Books", href="/")),
+        dbc.NavItem(dbc.NavLink("Upload", href="/upload")),
         dbc.Button(html.I(className="bi bi-upload", id="upload-button")),
         dbc.Button(
             html.I(

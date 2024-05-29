@@ -50,12 +50,7 @@ class CalibreDB(CalibreLibrary):
 
         return res
 
-    def clone(self, new_library_path: Path) -> CalibreDB:
-        self._run_calibredb(["clone", str(new_library_path)])
-
-        return CalibreDB(library_path=new_library_path)
-
-    def add(self, ebooks: List[Path]):
+    def add_books(self, ebooks: List[Path]):
         self._run_calibredb(["add", *[str(p) for p in ebooks]])
 
         return self
