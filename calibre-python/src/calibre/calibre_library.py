@@ -22,16 +22,15 @@ class CalibreLibrary:
         shutil.copytree(path_empty_library, new_library_path)
 
         return cls(library_path=new_library_path)
-    
+
     def clone(self, new_library_path: Path) -> CalibreLibrary:
         shutil.copytree(self.library_path, new_library_path)
         return self.__class__(new_library_path)
-        
+
     @abstractmethod
     def list_books(self, params: SearchParams = SearchParams()) -> List[BookMetadata]:
         raise NotImplementedError
-    
+
     @abstractmethod
     def add_books(self, ebook: List[Path]):
         raise NotImplementedError
-    

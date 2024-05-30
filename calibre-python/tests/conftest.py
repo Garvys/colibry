@@ -14,6 +14,7 @@ def ebook_paths(data_folder: Path) -> List[Path]:
     ebooks_dir = data_folder / "ebooks"
     return list(ebooks_dir.glob("*.epub"))
 
+
 @fixture(scope="session")
 def library_calibredb(ebook_paths: List[Path]):
     from tempfile import TemporaryDirectory

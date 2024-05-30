@@ -126,17 +126,16 @@ class CalibreSql(CalibreLibrary):
             res_parsed.append(book_metadata)
 
         return res_parsed
-    
+
     def add_book(self, ebook_path: Path):
         import epub
 
         if not ebook_path.exists():
             raise RuntimeError(f"Can't add an ebook if it doesn't exist : {ebook_path}")
-        
+
         book = epub.open_epub(ebook_path)
         print(book.opf.metadata.titles)
         print(book.opf.metadata.creators)
-        
 
     def add_books(self, ebooks: List[Path]):
         for ebook in ebooks:

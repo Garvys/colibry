@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List
 from calibre import CalibreDB, CalibreSql
 
+
 @pytest.mark.parametrize("library_class", [CalibreDB, CalibreSql])
 def test_clone(library_class, tmp_path: Path, ebook_paths: List[Path]):
     library1 = library_class.new_empty_library(tmp_path / "library1")
