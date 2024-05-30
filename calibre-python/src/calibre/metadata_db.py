@@ -2,6 +2,7 @@ from pathlib import Path
 import shutil
 import sqlite3
 from pydantic import BaseModel
+from typing import Optional
 
 class AuthorMetadata(BaseModel):
     id: int
@@ -31,7 +32,13 @@ class MetadataDB:
             res_parsed.append(AuthorMetadata(id=e[0], name=e[1], sort=e[2]))
         return res_parsed
     
-    def add_author(self, author_name: str) -> int:
+    def add_author(self, name: str, sort: str) -> int:
         cursor = self.connection.cursor()
-        cursor.execute(f"INSERT OR IGNORE INTO authors (name, sort) VALUES ('{author_name}', '{author_name}')")
+        cursor.execute(f"INSERT OR IGNORE INTO authors (name, sort) VALUES ('{name}', '{sort}')")
+
+    def get_author_id(self, name: str) -> Optional[int]:
+        cursor = self.connection.cursor()
+        res = cursor.execute(f"SELECT id FROM authors where name = '{name}'")
+        author_id = res.fetchone()
+        return author_id[0] if author_id is not None else None
 

@@ -10,10 +10,15 @@ def test_empty_metadata(tmp_path):
 def test_authors(tmp_path):
     db = MetadataDB.new_empty_db(tmp_path / "db")
 
-    db.add_author("David Bowie")
-    db.add_author("queen")
-    db.add_author("David Bowie")
-    db.add_author("david bowie")
+    db.add_author("David Bowie", "David Bowie")
+    db.add_author("queen", "queen")
+    db.add_author("David Bowie", "David Bowie")
+    db.add_author("david bowie", "david bowie")
+
+    assert db.get_author_id("David Bowie") == 1
+    assert db.get_author_id("queen") == 2
+    assert db.get_author_id("lol") is None
+
 
     res = db.list_authors()
     assert res == [
