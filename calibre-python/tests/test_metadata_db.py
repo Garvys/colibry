@@ -41,6 +41,14 @@ def test_authors(tmp_path):
         AuthorMetadata(id=2, name="queen", sort="queen"),
     ]
 
+    db.update_author_in_authors_table(id=1, name="DD", sort="EE")
+
+    res = db.list_authors_from_authors_table()
+    assert res == [
+        AuthorMetadata(id=1, name="DD", sort="EE"),
+        AuthorMetadata(id=2, name="queen", sort="queen"),
+    ]
+
 
 def test_series(tmp_path):
     db = MetadataDB.new_empty_db(tmp_path / "db")

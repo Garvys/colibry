@@ -112,6 +112,22 @@ class MetadataDB:
         author_id = res.fetchone()
         return author_id[0] if author_id is not None else None
 
+    def _update_table(
+        self, table_name: TableName, id: int, fields: List[str], values: List[str]
+    ):
+        if not fields and not values:
+            return
+
+        if len(fields) != len(values):
+            raise RuntimeError(
+                f"Different number of fields and values: {fields} and {values}"
+            )
+        cursor = self.connection.cursor()
+        setter = ", ".join(
+            f"{field} = '{value}'" for field, value in zip(fields, values)
+        )
+        cursor.execute(f"UPDATE {str(table_name.value)} SET {setter} WHERE id = {id}")
+
     def list_authors_from_authors_table(self) -> List[AuthorMetadata]:
         return self._list_table(
             TableName.authors,
@@ -127,6 +143,24 @@ class MetadataDB:
     def get_author_id(self, name: str) -> Optional[int]:
         return self._get_id_from_field(
             table_name=TableName.authors, field_name="name", value=name
+        )
+
+    def update_author_in_authors_table(
+        self, id: int, name: Optional[str] = None, sort: Optional[str] = None
+    ):
+        fields = []
+        values = []
+
+        if name is not None:
+            fields.append("name")
+            values.append(name)
+
+        if sort is not None:
+            fields.append("sort")
+            values.append(sort)
+
+        self._update_table(
+            table_name=TableName.authors, id=id, fields=fields, values=values
         )
 
     def list_series_from_series_table(self) -> List[SerieMetadata]:
