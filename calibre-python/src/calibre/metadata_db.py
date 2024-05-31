@@ -63,6 +63,16 @@ class MetadataDB:
             f"INSERT OR IGNORE INTO {table_name} ({fields_str}) VALUES ({values_str})"
         )
 
+    def _get_id_from_field(
+        self, table_name: str, field_name: str, value: str
+    ) -> Optional[int]:
+        cursor = self.connection.cursor()
+        res = cursor.execute(
+            f"SELECT id FROM {table_name} where {field_name} = '{value}'"
+        )
+        author_id = res.fetchone()
+        return author_id[0] if author_id is not None else None
+
     def list_authors_from_authors_table(self) -> List[AuthorMetadata]:
         return self._list_table(
             "authors",
@@ -76,10 +86,9 @@ class MetadataDB:
         )
 
     def get_author_id(self, name: str) -> Optional[int]:
-        cursor = self.connection.cursor()
-        res = cursor.execute(f"SELECT id FROM authors where name = '{name}'")
-        author_id = res.fetchone()
-        return author_id[0] if author_id is not None else None
+        return self._get_id_from_field(
+            table_name="authors", field_name="name", value=name
+        )
 
     def list_series_from_series_table(self) -> List[SerieMetadata]:
         return self._list_table(
@@ -94,9 +103,8 @@ class MetadataDB:
         )
 
     def get_serie_id(self, name: str) -> Optional[int]:
-        cursor = self.connection.cursor()
-        res = cursor.execute(f"SELECT id FROM series where name = '{name}'")
-        serie_id = res.fetchone()
-        return serie_id[0] if serie_id is not None else None
+        return self._get_id_from_field(
+            table_name="series", field_name="name", value=name
+        )
 
     # def list_book_authors_link(self):
