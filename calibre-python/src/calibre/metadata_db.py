@@ -51,25 +51,29 @@ class MetadataDB:
             res_parsed.append(parser(e))
         return res_parsed
 
-    def list_authors(self) -> List[AuthorMetadata]:
+    def _insert_in_table(self, table_name: str, fields: List[str], values: List[str]):
+        if len(fields) != len(values):
+            raise RuntimeError(
+                f"Different number of fields and values: {fields} and {values}"
+            )
+        cursor = self.connection.cursor()
+        fields_str = ", ".join(fields)
+        values_str = ", ".join(f"'{e}'" for e in values)
+        cursor.execute(
+            f"INSERT OR IGNORE INTO {table_name} ({fields_str}) VALUES ({values_str})"
+        )
+
+    def list_authors_from_authors_table(self) -> List[AuthorMetadata]:
         return self._list_table(
             "authors",
             ["id", "name", "sort"],
             lambda x: AuthorMetadata(id=x[0], name=x[1], sort=x[2]),
         )
 
-    def add_author_to_authors_table(self, name: str, sort: str) -> int:
-        cursor = self.connection.cursor()
-        cursor.execute(
-            f"INSERT OR IGNORE INTO authors (name, sort) VALUES ('{name}', '{sort}')"
+    def add_author_to_authors_table(self, name: str, sort: str):
+        self._insert_in_table(
+            table_name="authors", fields=["name", "sort"], values=[name, sort]
         )
-
-        author_id = self.get_author_id(name)
-        if author_id is None:
-            raise RuntimeError(
-                f"Author ({name}) not found while just inserted. This is not expected. "
-            )
-        return author_id
 
     def get_author_id(self, name: str) -> Optional[int]:
         cursor = self.connection.cursor()
@@ -77,25 +81,17 @@ class MetadataDB:
         author_id = res.fetchone()
         return author_id[0] if author_id is not None else None
 
-    def list_series(self) -> List[SerieMetadata]:
+    def list_series_from_series_table(self) -> List[SerieMetadata]:
         return self._list_table(
             "series",
             ["id", "name", "sort"],
             lambda x: SerieMetadata(id=x[0], name=x[1], sort=x[2]),
         )
 
-    def add_serie_to_series_table(self, name: str, sort: str) -> int:
-        cursor = self.connection.cursor()
-        cursor.execute(
-            f"INSERT OR IGNORE INTO series (name, sort) VALUES ('{name}', '{sort}')"
+    def add_serie_to_series_table(self, name: str, sort: str):
+        self._insert_in_table(
+            table_name="series", fields=["name", "sort"], values=[name, sort]
         )
-
-        serie_id = self.get_serie_id(name)
-        if serie_id is None:
-            raise RuntimeError(
-                f"Serie ({name}) not found while just inserted. This is not expected. "
-            )
-        return serie_id
 
     def get_serie_id(self, name: str) -> Optional[int]:
         cursor = self.connection.cursor()
