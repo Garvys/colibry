@@ -6,6 +6,7 @@ from calibre.metadata_db import (
     BookSerieLinkMetadata,
     BookMetadata,
 )
+from datetime import datetime
 
 
 def test_empty_metadata(tmp_path):
@@ -125,10 +126,50 @@ def test_books(tmp_path):
     assert db.lists_books_from_books_table() == []
 
     db.add_book_to_books_table(title="B1")
-    db.add_book_to_books_table(title="B2")
+    db.add_book_to_books_table(
+        title="B2",
+        series_index=3,
+        author_sort="pouet",
+        isbn="isbn",
+        lccn="lccn",
+        path="mypath",
+        has_cover=True,
+    )
+
+    now = datetime.now()
 
     res = db.lists_books_from_books_table()
+    res = [
+        r.model_copy(update={"timestamp": now, "pubdate": now, "last_modified": now})
+        for r in res
+    ]
     assert res == [
-        BookMetadata(id=2, title="B1", sort="B1", series_index=1, author_sort=None),
-        BookMetadata(id=3, title="B2", sort="B2", series_index=1, author_sort=None),
+        BookMetadata(
+            id=2,
+            title="B1",
+            sort="B1",
+            series_index=1,
+            author_sort=None,
+            path="",
+            has_cover=False,
+            timestamp=now,
+            pubdate=now,
+            last_modified=now,
+            isbn="",
+            lccn="",
+        ),
+        BookMetadata(
+            id=3,
+            title="B2",
+            sort="B2",
+            series_index=3,
+            author_sort="pouet",
+            path="mypath",
+            has_cover=True,
+            timestamp=now,
+            pubdate=now,
+            last_modified=now,
+            isbn="isbn",
+            lccn="lccn",
+        ),
     ]

@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional, List, Callable, Any
 from calibre.sql_aggregators import title_sort
 from enum import Enum
+from datetime import datetime
 import uuid
 
 
@@ -30,6 +31,13 @@ class BookMetadata(StrictBaseModel):
     sort: str
     author_sort: Optional[str]
     series_index: int
+    path: str
+    has_cover: bool
+    timestamp: datetime
+    pubdate: datetime
+    last_modified: datetime
+    isbn: str
+    lccn: str
 
 
 class BookAuthorLinkMetadata(StrictBaseModel):
@@ -173,13 +181,71 @@ class MetadataDB:
     def lists_books_from_books_table(self):
         return self._list_table(
             table_name=TableName.books,
-            fields=["id", "title", "sort", "author_sort", "series_index"],
+            fields=[
+                "id",
+                "title",
+                "sort",
+                "author_sort",
+                "series_index",
+                "has_cover",
+                "path",
+                "timestamp",
+                "pubdate",
+                "last_modified",
+                "isbn",
+                "lccn",
+            ],
             parser=lambda x: BookMetadata(
-                id=x[0], title=x[1], sort=x[2], author_sort=x[3], series_index=x[4]
+                id=x[0],
+                title=x[1],
+                sort=x[2],
+                author_sort=x[3],
+                series_index=x[4],
+                has_cover=x[5],
+                path=x[6],
+                timestamp=x[7],
+                pubdate=x[8],
+                last_modified=x[9],
+                isbn=x[10],
+                lccn=x[11],
             ),
         )
 
-    def add_book_to_books_table(self, title: str):
-        self._insert_in_table(
-            table_name=TableName.books, fields=["title"], values=[title]
-        )
+    def add_book_to_books_table(
+        self,
+        title: str,
+        series_index: Optional[int] = None,
+        author_sort: Optional[str] = None,
+        isbn: Optional[str] = None,
+        lccn: Optional[str] = None,
+        path: Optional[str] = None,
+        has_cover: Optional[str] = None,
+    ):
+        fields = ["title"]
+        values = [title]
+
+        if series_index is not None:
+            fields.append("series_index")
+            values.append(series_index)
+
+        if author_sort is not None:
+            fields.append("author_sort")
+            values.append(author_sort)
+
+        if isbn is not None:
+            fields.append("isbn")
+            values.append(isbn)
+
+        if lccn is not None:
+            fields.append("lccn")
+            values.append(lccn)
+
+        if path is not None:
+            fields.append("path")
+            values.append(path)
+
+        if has_cover is not None:
+            fields.append("has_cover")
+            values.append(has_cover)
+
+        self._insert_in_table(table_name=TableName.books, fields=fields, values=values)
