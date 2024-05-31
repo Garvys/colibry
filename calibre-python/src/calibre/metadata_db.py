@@ -1,27 +1,55 @@
 from pathlib import Path
 import shutil
 import sqlite3
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List, Callable, Any
 from calibre.sql_aggregators import title_sort
+from enum import Enum
+import uuid
 
 
-class AuthorMetadata(BaseModel):
+class StrictBaseModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class AuthorMetadata(StrictBaseModel):
     id: int
     name: str
     sort: str
 
 
-class SerieMetadata(BaseModel):
+class SerieMetadata(StrictBaseModel):
     id: int
     name: str
     sort: str
 
 
-class BookAuthorsLinkMetadata(BaseModel):
+class BookMetadata(StrictBaseModel):
     id: int
-    book: int
-    authors: int
+    title: str
+    sort: str
+    author_sort: Optional[str]
+    series_index: int
+
+
+class BookAuthorLinkMetadata(StrictBaseModel):
+    id: int
+    book_id: int
+    author_id: int
+
+
+class BookSerieLinkMetadata(StrictBaseModel):
+    id: int
+    book_id: int
+    serie_id: int
+
+
+class TableName(str, Enum):
+    authors = "authors"
+    series = "series"
+    books = "books"
+    books_authors_link = "books_authors_link"
+    books_series_link = "books_series_link"
 
 
 class MetadataDB:
@@ -29,6 +57,7 @@ class MetadataDB:
         self.db_path = db_path
         self.connection = sqlite3.connect(self.db_path)
         self.connection.create_function("title_sort", 1, title_sort)
+        self.connection.create_function("uuid4", 0, lambda: str(uuid.uuid4()))
 
     @classmethod
     def new_empty_db(cls, new_db_path: Path):
@@ -39,19 +68,21 @@ class MetadataDB:
 
     def _list_table(
         self,
-        table_name: str,
+        table_name: TableName,
         fields: List[str],
         parser: Callable[[List[Any]], BaseModel],
     ) -> List[BaseModel]:
         cursor = self.connection.cursor()
-        res = cursor.execute(f"SELECT {', '.join(fields)} FROM {table_name}")
+        res = cursor.execute(f"SELECT {', '.join(fields)} FROM {str(table_name.value)}")
         res = res.fetchall()
         res_parsed = []
         for e in res:
             res_parsed.append(parser(e))
         return res_parsed
 
-    def _insert_in_table(self, table_name: str, fields: List[str], values: List[str]):
+    def _insert_in_table(
+        self, table_name: TableName, fields: List[str], values: List[str]
+    ):
         if len(fields) != len(values):
             raise RuntimeError(
                 f"Different number of fields and values: {fields} and {values}"
@@ -60,51 +91,95 @@ class MetadataDB:
         fields_str = ", ".join(fields)
         values_str = ", ".join(f"'{e}'" for e in values)
         cursor.execute(
-            f"INSERT OR IGNORE INTO {table_name} ({fields_str}) VALUES ({values_str})"
+            f"INSERT OR IGNORE INTO {str(table_name.value)} ({fields_str}) VALUES ({values_str})"
         )
 
     def _get_id_from_field(
-        self, table_name: str, field_name: str, value: str
+        self, table_name: TableName, field_name: str, value: str
     ) -> Optional[int]:
         cursor = self.connection.cursor()
         res = cursor.execute(
-            f"SELECT id FROM {table_name} where {field_name} = '{value}'"
+            f"SELECT id FROM {str(table_name.value)} where {field_name} = '{value}'"
         )
         author_id = res.fetchone()
         return author_id[0] if author_id is not None else None
 
     def list_authors_from_authors_table(self) -> List[AuthorMetadata]:
         return self._list_table(
-            "authors",
+            TableName.authors,
             ["id", "name", "sort"],
             lambda x: AuthorMetadata(id=x[0], name=x[1], sort=x[2]),
         )
 
     def add_author_to_authors_table(self, name: str, sort: str):
         self._insert_in_table(
-            table_name="authors", fields=["name", "sort"], values=[name, sort]
+            table_name=TableName.authors, fields=["name", "sort"], values=[name, sort]
         )
 
     def get_author_id(self, name: str) -> Optional[int]:
         return self._get_id_from_field(
-            table_name="authors", field_name="name", value=name
+            table_name=TableName.authors, field_name="name", value=name
         )
 
     def list_series_from_series_table(self) -> List[SerieMetadata]:
         return self._list_table(
-            "series",
+            TableName.series,
             ["id", "name", "sort"],
             lambda x: SerieMetadata(id=x[0], name=x[1], sort=x[2]),
         )
 
     def add_serie_to_series_table(self, name: str, sort: str):
         self._insert_in_table(
-            table_name="series", fields=["name", "sort"], values=[name, sort]
+            table_name=TableName.series, fields=["name", "sort"], values=[name, sort]
         )
 
     def get_serie_id(self, name: str) -> Optional[int]:
         return self._get_id_from_field(
-            table_name="series", field_name="name", value=name
+            table_name=TableName.series, field_name="name", value=name
         )
 
-    # def list_book_authors_link(self):
+    def list_book_authors_link(self) -> List[BookAuthorLinkMetadata]:
+        return self._list_table(
+            table_name=TableName.books_authors_link,
+            fields=["id", "book", "author"],
+            parser=lambda x: BookAuthorLinkMetadata(
+                id=x[0], book_id=x[1], author_id=x[2]
+            ),
+        )
+
+    def add_book_author_link(self, book_id: int, author_id: int):
+        self._insert_in_table(
+            table_name=TableName.books_authors_link,
+            fields=["book", "author"],
+            values=[book_id, author_id],
+        )
+
+    def list_book_series_link(self) -> List[BookSerieLinkMetadata]:
+        return self._list_table(
+            table_name=TableName.books_series_link,
+            fields=["id", "book", "series"],
+            parser=lambda x: BookSerieLinkMetadata(
+                id=x[0], book_id=x[1], serie_id=x[2]
+            ),
+        )
+
+    def add_book_serie_link(self, book_id: int, serie_id: int):
+        self._insert_in_table(
+            table_name=TableName.books_series_link,
+            fields=["book", "series"],
+            values=[book_id, serie_id],
+        )
+
+    def lists_books_from_books_table(self):
+        return self._list_table(
+            table_name=TableName.books,
+            fields=["id", "title", "sort", "author_sort", "series_index"],
+            parser=lambda x: BookMetadata(
+                id=x[0], title=x[1], sort=x[2], author_sort=x[3], series_index=x[4]
+            ),
+        )
+
+    def add_book_to_books_table(self, title: str):
+        self._insert_in_table(
+            table_name=TableName.books, fields=["title"], values=[title]
+        )
