@@ -3,7 +3,7 @@ import shutil
 import sqlite3
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List, Callable, Any
-from calibre.sql_aggregators import title_sort
+from calibre.sql_aggregators import title_sort, SortedConcatenate, Concatenate
 from enum import Enum
 from datetime import datetime
 import uuid
@@ -52,12 +52,27 @@ class BookSerieLinkMetadata(StrictBaseModel):
     serie_id: int
 
 
+class BookAggregatedMetadata(StrictBaseModel):
+    id: int
+    title: str
+    authors: Optional[str]
+    timestamp: datetime
+    series: Optional[str]
+    series_index: int
+    sort: str
+    author_sort: Optional[str]
+    isbn: str
+    path: str
+    lccn: str
+
+
 class TableName(str, Enum):
     authors = "authors"
     series = "series"
     books = "books"
     books_authors_link = "books_authors_link"
     books_series_link = "books_series_link"
+    meta = "meta"
 
 
 class MetadataDB:
@@ -66,6 +81,8 @@ class MetadataDB:
         self.connection = sqlite3.connect(self.db_path)
         self.connection.create_function("title_sort", 1, title_sort)
         self.connection.create_function("uuid4", 0, lambda: str(uuid.uuid4()))
+        self.connection.create_aggregate("sortconcat", 2, SortedConcatenate)
+        self.connection.create_aggregate("concat", 1, Concatenate)
 
     @classmethod
     def new_empty_db(cls, new_db_path: Path):
@@ -283,3 +300,34 @@ class MetadataDB:
             values.append(has_cover)
 
         self._insert_in_table(table_name=TableName.books, fields=fields, values=values)
+
+    def list_books_from_meta_table(self) -> List[BookAggregatedMetadata]:
+        return self._list_table(
+            table_name=TableName.meta,
+            fields=[
+                "id",
+                "title",
+                "authors",
+                "timestamp",
+                "series",
+                "series_index",
+                "sort",
+                "author_sort",
+                "path",
+                "isbn",
+                "lccn",
+            ],
+            parser=lambda x: BookAggregatedMetadata(
+                id=x[0],
+                title=x[1],
+                authors=x[2],
+                timestamp=x[3],
+                series=x[4],
+                series_index=x[5],
+                sort=x[6],
+                author_sort=x[7],
+                path=x[8],
+                isbn=x[9],
+                lccn=x[10],
+            ),
+        )

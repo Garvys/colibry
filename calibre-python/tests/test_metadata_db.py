@@ -5,6 +5,7 @@ from calibre.metadata_db import (
     BookAuthorLinkMetadata,
     BookSerieLinkMetadata,
     BookMetadata,
+    BookAggregatedMetadata,
 )
 from datetime import datetime
 
@@ -180,4 +181,33 @@ def test_books(tmp_path):
             isbn="isbn",
             lccn="lccn",
         ),
+    ]
+
+
+def test_meta(tmp_path):
+    db = MetadataDB.new_empty_db(tmp_path / "db")
+
+    now = datetime.now()
+
+    assert db.list_books_from_meta_table() == []
+
+    db.add_book_to_books_table(title="Silo Origin")
+
+    res = db.list_books_from_meta_table()
+    res = [r.model_copy(update={"timestamp": now}) for r in res]
+
+    assert res == [
+        BookAggregatedMetadata(
+            id=2,
+            title="Silo Origin",
+            authors=None,
+            series=None,
+            series_index=1,
+            timestamp=now,
+            author_sort=None,
+            sort="Silo Origin",
+            path="",
+            lccn="",
+            isbn="",
+        )
     ]
