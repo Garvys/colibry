@@ -6,6 +6,7 @@ from calibre.metadata_db import (
     BookSerieLinkMetadata,
     BookMetadata,
     BookAggregatedMetadata,
+    BookStructuredMetadata,
 )
 from datetime import datetime
 
@@ -15,7 +16,7 @@ def test_empty_metadata(tmp_path):
 
     assert db.list_authors_from_authors_table() == []
     assert db.list_series_from_series_table() == []
-    assert db.list_book_authors_link() == []
+    assert db.list_book_authors_links() == []
     assert db.list_book_series_link() == []
     assert db.lists_books_from_books_table() == []
 
@@ -39,6 +40,11 @@ def test_authors(tmp_path):
     res = db.list_authors_from_authors_table()
     assert res == [
         AuthorMetadata(id=1, name="David Bowie", sort="David Bowie"),
+        AuthorMetadata(id=2, name="queen", sort="queen"),
+    ]
+
+    res = db.list_authors_from_authors_table(author_id=2)
+    assert res == [
         AuthorMetadata(id=2, name="queen", sort="queen"),
     ]
 
@@ -74,6 +80,11 @@ def test_series(tmp_path):
         SerieMetadata(id=2, name="Game of Thrones", sort="Game of Thrones"),
     ]
 
+    res = db.list_series_from_series_table(serie_id=2)
+    assert res == [
+        SerieMetadata(id=2, name="Game of Thrones", sort="Game of Thrones"),
+    ]
+
 
 def test_books_authors_link(tmp_path):
     db = MetadataDB.new_empty_db(tmp_path / "db")
@@ -94,11 +105,16 @@ def test_books_authors_link(tmp_path):
     db.add_book_author_link(2, 3)
     db.add_book_author_link(4, 4)
 
-    res = db.list_book_authors_link()
+    res = db.list_book_authors_links()
     assert res == [
         BookAuthorLinkMetadata(id=1, book_id=2, author_id=3),
         BookAuthorLinkMetadata(id=2, book_id=3, author_id=2),
         BookAuthorLinkMetadata(id=3, book_id=4, author_id=4),
+    ]
+
+    res = db.list_book_authors_links(book_id=3)
+    assert res == [
+        BookAuthorLinkMetadata(id=2, book_id=3, author_id=2),
     ]
 
 
@@ -128,14 +144,19 @@ def test_books_series_link(tmp_path):
         BookSerieLinkMetadata(id=3, book_id=4, serie_id=4),
     ]
 
+    res = db.list_book_series_link(book_id=2)
+    assert res == [
+        BookSerieLinkMetadata(id=1, book_id=2, serie_id=3),
+    ]
+
 
 def test_books(tmp_path):
     db = MetadataDB.new_empty_db(tmp_path / "db")
 
     assert db.lists_books_from_books_table() == []
 
-    db.add_book_to_books_table(title="B1")
-    db.add_book_to_books_table(
+    id_b1 = db.add_book_to_books_table(title="B1")
+    id_b2 = db.add_book_to_books_table(
         title="B2",
         series_index=3,
         author_sort="pouet",
@@ -144,6 +165,9 @@ def test_books(tmp_path):
         path="mypath",
         has_cover=True,
     )
+
+    assert id_b1 == 2
+    assert id_b2 == 3
 
     now = datetime.now()
 
@@ -210,4 +234,24 @@ def test_meta(tmp_path):
             lccn="",
             isbn="",
         )
+    ]
+
+
+def test_books_structured(tmp_path):
+    db = MetadataDB.new_empty_db(tmp_path / "db")
+
+    now = datetime.now()
+
+    assert db.list_books_structured() == []
+
+    db.add_book(title="Silo", authors=[("Hugh Howey", "hugh,howey")])
+
+    res = db.list_books_structured()
+    res = [r.copy_and_override_datetimes(now) for r in res]
+    assert res == [
+        BookStructuredMetadata(
+            book=BookMetadata(id=2, title="Silo", sort="Silo"),
+            authors=[AuthorMetadata(id=1, name="Hugh Howey", sort="hugh,howey")],
+            series=[],
+        ).copy_and_override_datetimes(now)
     ]

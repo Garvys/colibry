@@ -1,8 +1,8 @@
 from pathlib import Path
 import shutil
 import sqlite3
-from pydantic import BaseModel, ConfigDict
-from typing import Optional, List, Callable, Any
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from typing import Optional, List, Callable, Any, Dict, Tuple
 from calibre.sql_aggregators import title_sort, SortedConcatenate, Concatenate
 from enum import Enum
 from datetime import datetime
@@ -28,16 +28,25 @@ class SerieMetadata(StrictBaseModel):
 class BookMetadata(StrictBaseModel):
     id: int
     title: str
-    sort: str
-    author_sort: Optional[str]
-    series_index: int
-    path: str
-    has_cover: bool
-    timestamp: datetime
-    pubdate: datetime
-    last_modified: datetime
-    isbn: str
-    lccn: str
+    sort: str = ""
+    author_sort: Optional[str] = None
+    series_index: int = 1
+    path: str = ""
+    has_cover: bool = False
+    timestamp: datetime = Field(default_factory=datetime.now)
+    pubdate: datetime = Field(default_factory=datetime.now)
+    last_modified: datetime = Field(default_factory=datetime.now)
+    isbn: str = ""
+    lccn: str = ""
+
+    def copy_and_override_datetimes(self, dt_override: datetime) -> "BookMetadata":
+        return self.model_copy(
+            update={
+                "timestamp": dt_override,
+                "pubdate": dt_override,
+                "last_modified": dt_override,
+            }
+        )
 
 
 class BookAuthorLinkMetadata(StrictBaseModel):
@@ -64,6 +73,16 @@ class BookAggregatedMetadata(StrictBaseModel):
     isbn: str
     path: str
     lccn: str
+
+
+class BookStructuredMetadata(StrictBaseModel):
+    book: BookMetadata
+    authors: List[AuthorMetadata]
+    series: List[SerieMetadata]
+
+    def copy_and_override_datetimes(self, dt_override: datetime) -> "BookMetadata":
+        book_overriden = self.book.copy_and_override_datetimes(dt_override)
+        return self.model_copy(update={"book": book_overriden})
 
 
 class TableName(str, Enum):
@@ -96,9 +115,19 @@ class MetadataDB:
         table_name: TableName,
         fields: List[str],
         parser: Callable[[List[Any]], BaseModel],
+        # Filter to apply, should map key to value
+        filter: Optional[Dict[str, str]] = None,
     ) -> List[BaseModel]:
         cursor = self.connection.cursor()
-        res = cursor.execute(f"SELECT {', '.join(fields)} FROM {str(table_name.value)}")
+
+        query = f"SELECT {', '.join(fields)} FROM {str(table_name.value)}"
+
+        if filter:
+            q = " AND ".join([f"{key} = '{value}'" for key, value in filter.items()])
+            if q:
+                query += " WHERE " + q
+
+        res = cursor.execute(query)
         res = res.fetchall()
         res_parsed = []
         for e in res:
@@ -118,6 +147,7 @@ class MetadataDB:
         cursor.execute(
             f"INSERT OR IGNORE INTO {str(table_name.value)} ({fields_str}) VALUES ({values_str})"
         )
+        return cursor.lastrowid
 
     def _get_id_from_field(
         self, table_name: TableName, field_name: str, value: str
@@ -145,11 +175,19 @@ class MetadataDB:
         )
         cursor.execute(f"UPDATE {str(table_name.value)} SET {setter} WHERE id = {id}")
 
-    def list_authors_from_authors_table(self) -> List[AuthorMetadata]:
+    def list_authors_from_authors_table(
+        self, author_id: Optional[int] = None
+    ) -> List[AuthorMetadata]:
+        filter = None
+        if author_id is not None:
+            filter = {}
+            filter["id"] = author_id
+
         return self._list_table(
             TableName.authors,
             ["id", "name", "sort"],
             lambda x: AuthorMetadata(id=x[0], name=x[1], sort=x[2]),
+            filter=filter,
         )
 
     def add_author_to_authors_table(self, name: str, sort: str):
@@ -180,11 +218,18 @@ class MetadataDB:
             table_name=TableName.authors, id=id, fields=fields, values=values
         )
 
-    def list_series_from_series_table(self) -> List[SerieMetadata]:
+    def list_series_from_series_table(
+        self, serie_id: Optional[int] = None
+    ) -> List[SerieMetadata]:
+        filter = {}
+        if serie_id is not None:
+            filter["id"] = serie_id
+
         return self._list_table(
             TableName.series,
             ["id", "name", "sort"],
             lambda x: SerieMetadata(id=x[0], name=x[1], sort=x[2]),
+            filter=filter,
         )
 
     def add_serie_to_series_table(self, name: str, sort: str):
@@ -197,13 +242,21 @@ class MetadataDB:
             table_name=TableName.series, field_name="name", value=name
         )
 
-    def list_book_authors_link(self) -> List[BookAuthorLinkMetadata]:
+    def list_book_authors_links(
+        self, book_id: Optional[int] = None
+    ) -> List[BookAuthorLinkMetadata]:
+        filter = None
+        if book_id is not None:
+            filter = {}
+            filter["book"] = book_id
+
         return self._list_table(
             table_name=TableName.books_authors_link,
             fields=["id", "book", "author"],
             parser=lambda x: BookAuthorLinkMetadata(
                 id=x[0], book_id=x[1], author_id=x[2]
             ),
+            filter=filter,
         )
 
     def add_book_author_link(self, book_id: int, author_id: int):
@@ -213,13 +266,20 @@ class MetadataDB:
             values=[book_id, author_id],
         )
 
-    def list_book_series_link(self) -> List[BookSerieLinkMetadata]:
+    def list_book_series_link(
+        self, book_id: Optional[int] = None
+    ) -> List[BookSerieLinkMetadata]:
+        filter = {}
+        if book_id is not None:
+            filter["book"] = book_id
+
         return self._list_table(
             table_name=TableName.books_series_link,
             fields=["id", "book", "series"],
             parser=lambda x: BookSerieLinkMetadata(
                 id=x[0], book_id=x[1], serie_id=x[2]
             ),
+            filter=filter,
         )
 
     def add_book_serie_link(self, book_id: int, serie_id: int):
@@ -229,7 +289,7 @@ class MetadataDB:
             values=[book_id, serie_id],
         )
 
-    def lists_books_from_books_table(self):
+    def lists_books_from_books_table(self) -> List[BookMetadata]:
         return self._list_table(
             table_name=TableName.books,
             fields=[
@@ -262,6 +322,7 @@ class MetadataDB:
             ),
         )
 
+    # Returns the BOOK ID of the inserted book
     def add_book_to_books_table(
         self,
         title: str,
@@ -271,7 +332,7 @@ class MetadataDB:
         lccn: Optional[str] = None,
         path: Optional[str] = None,
         has_cover: Optional[str] = None,
-    ):
+    ) -> int:
         fields = ["title"]
         values = [title]
 
@@ -299,7 +360,10 @@ class MetadataDB:
             fields.append("has_cover")
             values.append(has_cover)
 
-        self._insert_in_table(table_name=TableName.books, fields=fields, values=values)
+        last_row_id = self._insert_in_table(
+            table_name=TableName.books, fields=fields, values=values
+        )
+        return last_row_id
 
     def list_books_from_meta_table(self) -> List[BookAggregatedMetadata]:
         return self._list_table(
@@ -331,3 +395,55 @@ class MetadataDB:
                 lccn=x[10],
             ),
         )
+
+    def list_books_structured(self) -> List[BookStructuredMetadata]:
+        book_metadatas = self.lists_books_from_books_table()
+
+        # TODO: We could probably reduce a bit the number of SQL calls by doing some JOINT
+        res = []
+        for book_metadata in book_metadatas:
+            # Need to find all the authors attached to that book
+            book_author_links = self.list_book_authors_links(book_id=book_metadata.id)
+
+            authors = [
+                self.list_authors_from_authors_table(
+                    author_id=book_author_link.author_id
+                )[0]
+                for book_author_link in book_author_links
+            ]
+
+            # Need to find all the series attached to that book
+            book_series_links = self.list_book_series_link(book_id=book_metadata.id)
+
+            series = [
+                self.list_series_from_series_table(serie_id=book_serie_link.serie_id)
+                for book_serie_link in book_series_links
+            ]
+
+            res.append(
+                BookStructuredMetadata(
+                    book=book_metadata, authors=authors, series=series
+                )
+            )
+
+        return res
+
+    def add_book(self, title: str, authors: Optional[List[Tuple[str, str]]]) -> int:
+        book_id = self.add_book_to_books_table(title=title)
+
+        if authors:
+            for author_name, author_sort in authors:
+                # Insert author if not already present in DB
+                self.add_author_to_authors_table(name=author_name, sort=author_sort)
+
+                # Retrive ID
+                author_id = self.get_author_id(author_name)
+                if author_id is None:
+                    raise ValueError(
+                        f"None author_id whereas the author has been inserted : {author_name}"
+                    )
+
+                # Add book author link
+                self.add_book_author_link(book_id=book_id, author_id=author_id)
+
+        return book_id
