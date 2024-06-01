@@ -245,12 +245,22 @@ def test_books_structured(tmp_path):
     assert db.list_books_structured() == []
 
     db.add_book(title="Silo", authors=[("Hugh Howey", "hugh,howey")])
+    db.add_book(title="Silo Origins", authors=[("Hugh Howey", "hugh,howey")])
+
+    assert len(db.list_authors_from_authors_table()) == 1
+    assert len(db.list_series_from_series_table()) == 0
 
     res = db.list_books_structured()
     res = [r.copy_and_override_datetimes(now) for r in res]
+
     assert res == [
         BookStructuredMetadata(
             book=BookMetadata(id=2, title="Silo", sort="Silo"),
+            authors=[AuthorMetadata(id=1, name="Hugh Howey", sort="hugh,howey")],
+            series=[],
+        ).copy_and_override_datetimes(now),
+        BookStructuredMetadata(
+            book=BookMetadata(id=3, title="Silo Origins", sort="Silo Origins"),
             authors=[AuthorMetadata(id=1, name="Hugh Howey", sort="hugh,howey")],
             series=[],
         ).copy_and_override_datetimes(now)
