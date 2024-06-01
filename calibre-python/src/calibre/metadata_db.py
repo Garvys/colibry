@@ -78,7 +78,7 @@ class BookAggregatedMetadata(StrictBaseModel):
 class BookStructuredMetadata(StrictBaseModel):
     book: BookMetadata
     authors: List[AuthorMetadata]
-    series: List[SerieMetadata]
+    serie: Optional[SerieMetadata]
 
     def copy_and_override_datetimes(self, dt_override: datetime) -> "BookMetadata":
         book_overriden = self.book.copy_and_override_datetimes(dt_override)
@@ -117,6 +117,7 @@ class MetadataDB:
         parser: Callable[[List[Any]], BaseModel],
         # Filter to apply, should map key to value
         filter: Optional[Dict[str, str]] = None,
+        limit: Optional[int] = None,
     ) -> List[BaseModel]:
         cursor = self.connection.cursor()
 
@@ -126,6 +127,9 @@ class MetadataDB:
             q = " AND ".join([f"{key} = '{value}'" for key, value in filter.items()])
             if q:
                 query += " WHERE " + q
+
+        if limit is not None:
+            query += f" LIMIT {limit}"
 
         res = cursor.execute(query)
         res = res.fetchall()
@@ -267,7 +271,7 @@ class MetadataDB:
         )
 
     def list_book_series_link(
-        self, book_id: Optional[int] = None
+        self, book_id: Optional[int] = None, limit: Optional[int] = None
     ) -> List[BookSerieLinkMetadata]:
         filter = {}
         if book_id is not None:
@@ -280,6 +284,7 @@ class MetadataDB:
                 id=x[0], book_id=x[1], serie_id=x[2]
             ),
             filter=filter,
+            limit=limit,
         )
 
     def add_book_serie_link(self, book_id: int, serie_id: int):
@@ -413,37 +418,72 @@ class MetadataDB:
             ]
 
             # Need to find all the series attached to that book
-            book_series_links = self.list_book_series_link(book_id=book_metadata.id)
+            book_series_links = self.list_book_series_link(
+                book_id=book_metadata.id, limit=1
+            )
 
-            series = [
-                self.list_series_from_series_table(serie_id=book_serie_link.serie_id)
-                for book_serie_link in book_series_links
-            ]
+            serie = None
+            if book_series_links:
+                serie = self.list_series_from_series_table(
+                    serie_id=book_series_links[0].serie_id
+                )[0]
 
             res.append(
-                BookStructuredMetadata(
-                    book=book_metadata, authors=authors, series=series
-                )
+                BookStructuredMetadata(book=book_metadata, authors=authors, serie=serie)
             )
 
         return res
 
-    def add_book(self, title: str, authors: Optional[List[Tuple[str, str]]]) -> int:
-        book_id = self.add_book_to_books_table(title=title)
+    def add_book(
+        self,
+        title: str,
+        authors: Optional[List[Tuple[str, str]]] = None,
+        series_index: Optional[int] = None,
+        author_sort: Optional[str] = None,
+        isbn: Optional[str] = None,
+        lccn: Optional[str] = None,
+        path: Optional[str] = None,
+        has_cover: Optional[str] = None,
+        serie: Optional[Tuple[str, str]] = None,
+    ) -> int:
+        book_id = self.add_book_to_books_table(
+            title=title,
+            series_index=series_index,
+            author_sort=author_sort,
+            isbn=isbn,
+            lccn=lccn,
+            path=path,
+            has_cover=has_cover,
+        )
 
         if authors:
-            for author_name, author_sort in authors:
+            for name, sort in authors:
                 # Insert author if not already present in DB
-                self.add_author_to_authors_table(name=author_name, sort=author_sort)
+                self.add_author_to_authors_table(name=name, sort=sort)
 
-                # Retrive ID
-                author_id = self.get_author_id(author_name)
+                # Retrieve ID
+                author_id = self.get_author_id(name)
                 if author_id is None:
                     raise ValueError(
-                        f"None author_id whereas the author has been inserted : {author_name}"
+                        f"None author_id whereas the author has been inserted : {name}"
                     )
 
                 # Add book author link
                 self.add_book_author_link(book_id=book_id, author_id=author_id)
+
+        if serie is not None:
+            name, sort = serie
+            # Insert serie if not already present in DB
+            self.add_serie_to_series_table(name=name, sort=sort)
+
+            # Retrieve ID
+            serie_id = self.get_serie_id(name)
+            if serie_id is None:
+                raise ValueError(
+                    f"None serie_id whereas the serie has been inserted : {name}"
+                )
+
+            # Add book serie link
+            self.add_book_serie_link(book_id=book_id, serie_id=serie_id)
 
         return book_id

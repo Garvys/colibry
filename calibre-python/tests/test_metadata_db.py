@@ -245,10 +245,26 @@ def test_books_structured(tmp_path):
     assert db.list_books_structured() == []
 
     db.add_book(title="Silo", authors=[("Hugh Howey", "hugh,howey")])
-    db.add_book(title="Silo Origins", authors=[("Hugh Howey", "hugh,howey")])
+    db.add_book(
+        title="Silo Origins",
+        authors=[("Hugh Howey", "hugh,howey")],
+        series_index=2,
+        author_sort="hugy",
+        isbn="isbn",
+        lccn="lccn",
+        path="mypath",
+        has_cover=True,
+        serie=["silo", "silo"],
+    )
+    db.add_book(
+        title="Silo Generations",
+        authors=[("Hugh Howey", "hugh,howey")],
+        serie=["silo", "silo"],
+        series_index=3,
+    )
 
     assert len(db.list_authors_from_authors_table()) == 1
-    assert len(db.list_series_from_series_table()) == 0
+    assert len(db.list_series_from_series_table()) == 1
 
     res = db.list_books_structured()
     res = [r.copy_and_override_datetimes(now) for r in res]
@@ -257,11 +273,28 @@ def test_books_structured(tmp_path):
         BookStructuredMetadata(
             book=BookMetadata(id=2, title="Silo", sort="Silo"),
             authors=[AuthorMetadata(id=1, name="Hugh Howey", sort="hugh,howey")],
-            series=[],
+            serie=None,
         ).copy_and_override_datetimes(now),
         BookStructuredMetadata(
-            book=BookMetadata(id=3, title="Silo Origins", sort="Silo Origins"),
+            book=BookMetadata(
+                id=3,
+                title="Silo Origins",
+                sort="Silo Origins",
+                series_index=2,
+                author_sort="hugy",
+                isbn="isbn",
+                lccn="lccn",
+                path="mypath",
+                has_cover=True,
+            ),
             authors=[AuthorMetadata(id=1, name="Hugh Howey", sort="hugh,howey")],
-            series=[],
-        ).copy_and_override_datetimes(now)
+            serie=SerieMetadata(id=1, name="silo", sort="silo"),
+        ).copy_and_override_datetimes(now),
+        BookStructuredMetadata(
+            book=BookMetadata(
+                id=4, title="Silo Generations", sort="Silo Generations", series_index=3
+            ),
+            authors=[AuthorMetadata(id=1, name="Hugh Howey", sort="hugh,howey")],
+            serie=SerieMetadata(id=1, name="silo", sort="silo"),
+        ).copy_and_override_datetimes(now),
     ]
