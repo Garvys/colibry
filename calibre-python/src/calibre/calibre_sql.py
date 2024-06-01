@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import List
 
-from calibre.calibre_library import CalibreLibrary
+from calibre.calibre_library import AbstractCalibreLibrary
 from calibre.objects import (
     BookMetadata,
     InternalCalibreField,
@@ -12,15 +12,16 @@ from calibre.converters import (
     book_metadata_internal_to_external,
     calibre_field_external_to_internals,
 )
+from calibre.metadata_db import MetadataDB
 import sqlite3
 import epub
 
 
-class CalibreSql(CalibreLibrary):
+class CalibreSql(AbstractCalibreLibrary):
     def __init__(self, library_path: Path):
         super().__init__(library_path=library_path)
 
-        self.connection = sqlite3.connect(self.library_path / "metadata.db")
+        self.metadata_db = MetadataDB(self.library_path / "metadata.db")
 
     def _list_all_tables(self):
         cursor = self.connection.cursor()

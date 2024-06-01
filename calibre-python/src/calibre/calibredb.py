@@ -9,7 +9,7 @@ from typing import List, Union
 
 from pydantic import TypeAdapter
 
-from calibre.calibre_library import CalibreLibrary
+from calibre.calibre_library import AbstractCalibreLibrary
 from calibre.errors import CalibreRuntimeError
 from calibre.objects import BookMetadata
 from calibre.search_params import SearchParams
@@ -27,7 +27,7 @@ def run_shell(cmd):
     return res.stdout
 
 
-class CalibreDB(CalibreLibrary):
+class CalibreDB(AbstractCalibreLibrary):
     def __init__(self, library_path: Union[Path, str]):
         super().__init__(library_path=library_path)
 

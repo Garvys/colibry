@@ -5,7 +5,8 @@ authors = [
     {name = "Alexandre Caulier", email = "alexandre.caulier.a@gmail.com"},
 ]
 dependencies = [
-  'pydantic > 2.0, < 3'
+  'pydantic > 2.0, < 3',
+  'epub > 0.5, < 0.6'
 ]
 description = "TODO"
 readme = "README.md"

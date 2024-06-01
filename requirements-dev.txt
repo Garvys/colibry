@@ -38,6 +38,8 @@ dash-testing-stub==0.0.2
     # via dash
 dill==0.3.8
     # via multiprocess
+epub==0.5.2
+    # via calibre-python
 exceptiongroup==1.2.1
     # via
     #   pytest
