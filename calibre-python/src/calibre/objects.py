@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import List, Optional
+from typing import List, Optional, Any
 from pathlib import Path
 from datetime import datetime
 from enum import Enum
@@ -16,6 +16,7 @@ class ExternalBookMetadata(BaseModel):
     pubdate: datetime
     timestamp: datetime
     cover: Optional[Path]
+    formats: List[Path]
 
     model_config = ConfigDict(extra="forbid")
 

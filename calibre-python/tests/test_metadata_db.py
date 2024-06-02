@@ -7,6 +7,7 @@ from calibre.metadata_db import (
     BookMetadata,
     BookAggregatedMetadata,
     BookStructuredMetadata,
+    DataMetadata,
 )
 from datetime import datetime
 
@@ -218,7 +219,7 @@ def test_meta(tmp_path):
     db.add_book_to_books_table(title="Silo Origin")
 
     res = db.list_books_from_meta_table()
-    res = [r.model_copy(update={"timestamp": now}) for r in res]
+    res = [r.model_copy(update={"timestamp": now, "pubdate": now}) for r in res]
 
     assert res == [
         BookAggregatedMetadata(
@@ -228,6 +229,7 @@ def test_meta(tmp_path):
             series=None,
             series_index=1,
             timestamp=now,
+            pubdate=now,
             author_sort=None,
             sort="Silo Origin",
             path="",
@@ -297,4 +299,52 @@ def test_books_structured(tmp_path):
             authors=[AuthorMetadata(id=1, name="Hugh Howey", sort="hugh,howey")],
             serie=SerieMetadata(id=1, name="silo", sort="silo"),
         ).copy_and_override_datetimes(now),
+    ]
+
+
+def test_data_table(tmp_path):
+    db = MetadataDB.new_empty_db(tmp_path / "db")
+
+    assert db.list_data_table() == []
+
+    id_silo = db.add_book(title="Silo", authors=[("Hugh Howey", "hugh,howey")])
+    id_silo_origins = db.add_book(
+        title="Silo Origins", authors=[("Hugh Howey", "hugh,howey")]
+    )
+
+    db.add_to_data_table(
+        book_id=id_silo, format="EPUB", uncompressed_size=100, name="Lol.epub"
+    )
+    db.add_to_data_table(
+        book_id=id_silo, format="PDF", uncompressed_size=50, name="Lol.pdf"
+    )
+    db.add_to_data_table(
+        book_id=id_silo_origins, format="PDF", uncompressed_size=50, name="Lol.pdf"
+    )
+
+    res = db.list_data_table()
+    assert res == [
+        DataMetadata(
+            id=1, book_id=id_silo, format="EPUB", uncompressed_size=100, name="Lol.epub"
+        ),
+        DataMetadata(
+            id=2, book_id=id_silo, format="PDF", uncompressed_size=50, name="Lol.pdf"
+        ),
+        DataMetadata(
+            id=3,
+            book_id=id_silo_origins,
+            format="PDF",
+            uncompressed_size=50,
+            name="Lol.pdf",
+        ),
+    ]
+
+    res = db.list_data_table(book_id=id_silo)
+    assert res == [
+        DataMetadata(
+            id=1, book_id=id_silo, format="EPUB", uncompressed_size=100, name="Lol.epub"
+        ),
+        DataMetadata(
+            id=2, book_id=id_silo, format="PDF", uncompressed_size=50, name="Lol.pdf"
+        ),
     ]

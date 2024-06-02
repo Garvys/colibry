@@ -38,7 +38,7 @@ def test_list_books(
     books_metadata = library_calibresql.list_books()
     books_metadata = [b.model_copy_and_remove_microseconds() for b in books_metadata]
 
-    print(books_metadata_expected)
+    print(books_metadata_expected[0])
 
     assert (
         books_metadata_expected == books_metadata

@@ -25,30 +25,35 @@ class CalibreSql(AbstractCalibreLibrary):
         print(res.fetchall())
 
     def list_books(self) -> List[ExternalBookMetadata]:
-        book_aggregated_metadatas = self.metadata_db.list_books_from_meta_table()
+        book_structured_metadatas = self.metadata_db.list_books_structured()
 
         library_abs_path = self.library_path.absolute()
 
         res = []
-        for b in book_aggregated_metadatas:
-            # TODO: There is a field has_cover in the metadata.db that we could leverage here
-            cover_path = library_abs_path / b.path / COVER_FILENAME
+        for b in book_structured_metadatas:
+            authors = " & ".join([a.name for a in b.authors])
+
             cover = None
-            if cover_path.exists():
-                cover = cover_path
+            if b.book.has_cover:
+                cover = library_abs_path / b.book.path / COVER_FILENAME
+                if not cover.exists():
+                    raise RuntimeError(
+                        f"Book is said to have a cover and it doesn't exist: {cover}"
+                    )
 
             res.append(
                 ExternalBookMetadata(
-                    id=b.id,
-                    title=b.title,
-                    authors=b.authors,
-                    series=b.series,
-                    series_index=b.series_index,
-                    isbn=b.isbn,
-                    author_sort=b.author_sort,
-                    timestamp=b.timestamp,
-                    pubdate=b.pubdate,
+                    id=b.book.id,
+                    title=b.book.title,
+                    authors=authors,
+                    series=b.serie.name if b.serie is not None else None,
+                    series_index=b.book.series_index,
+                    isbn=b.book.isbn,
+                    author_sort=b.book.author_sort,
+                    timestamp=b.book.timestamp,
+                    pubdate=b.book.pubdate,
                     cover=cover,
+                    formats=[],
                 )
             )
 

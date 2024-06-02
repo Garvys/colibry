@@ -65,6 +65,7 @@ class CalibreDB(AbstractCalibreLibrary):
             "timestamp",
             "pubdate",
             "cover",
+            "formats",
         ]
 
         cmd = ["list", "--for-machine", "--fields", ",".join(fields)]

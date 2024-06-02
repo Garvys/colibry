@@ -61,6 +61,14 @@ class BookSerieLinkMetadata(StrictBaseModel):
     serie_id: int
 
 
+class DataMetadata(StrictBaseModel):
+    id: int
+    book_id: int
+    format: str
+    uncompressed_size: int
+    name: str
+
+
 class BookAggregatedMetadata(StrictBaseModel):
     id: int
     title: str
@@ -93,6 +101,7 @@ class TableName(str, Enum):
     books_authors_link = "books_authors_link"
     books_series_link = "books_series_link"
     meta = "meta"
+    data = "data"
 
 
 class MetadataDB:
@@ -293,6 +302,28 @@ class MetadataDB:
             table_name=TableName.books_series_link,
             fields=["book", "series"],
             values=[book_id, serie_id],
+        )
+
+    def list_data_table(self, book_id: Optional[int] = None) -> List[DataMetadata]:
+        filter = {}
+        if book_id is not None:
+            filter["book"] = book_id
+        return self._list_table(
+            table_name=TableName.data,
+            fields=["id", "book", "format", "uncompressed_size", "name"],
+            parser=lambda x: DataMetadata(
+                id=x[0], book_id=x[1], format=x[2], uncompressed_size=x[3], name=x[4]
+            ),
+            filter=filter,
+        )
+
+    def add_to_data_table(
+        self, book_id: int, format: str, uncompressed_size: int, name: str
+    ):
+        self._insert_in_table(
+            table_name=TableName.data,
+            fields=["book", "format", "uncompressed_size", "name"],
+            values=[book_id, format, uncompressed_size, name],
         )
 
     def lists_books_from_books_table(self) -> List[BookMetadata]:
