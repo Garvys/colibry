@@ -11,9 +11,7 @@ from pydantic import TypeAdapter
 
 from calibre.calibre_library import AbstractCalibreLibrary
 from calibre.errors import CalibreRuntimeError
-from calibre.objects import BookMetadata
-from calibre.search_params import SearchParams
-from copy import deepcopy
+from calibre.objects import ExternalBookMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -55,32 +53,22 @@ class CalibreDB(AbstractCalibreLibrary):
 
         return self
 
-    def list_books(self, params: SearchParams = SearchParams()) -> List[BookMetadata]:
-        fields = deepcopy(params.fields)
-        fields.append("id")
-        fields.append("title")
+    def list_books(self) -> List[ExternalBookMetadata]:
+        fields = [
+            "id",
+            "title",
+            "authors",
+            "series",
+            "series_index",
+            "isbn",
+            "author_sort",
+            "timestamp",
+            "pubdate",
+            "cover",
+        ]
 
         cmd = ["list", "--for-machine", "--fields", ",".join(fields)]
-        if params.filters:
-            for filter in params.filters:
-                cmd.append("-s")
-                cmd.append(filter.to_calibredb_filter())
 
         res = self._run_calibredb(cmd)
 
-        return TypeAdapter(List[BookMetadata]).validate_python(json.loads(res))
-
-    def list_authors(self) -> List[str]:
-        res = self._run_calibredb(["list", "--for-machine", "--fields", "authors"])
-        books_metadata = TypeAdapter(List[BookMetadata]).validate_python(
-            json.loads(res)
-        )
-        return [e.authors for e in books_metadata if e.authors]
-
-    def remove_from_ids(self, ids: List[int]) -> CalibreDB:
-        self._run_calibredb(["remove", ",".join([str(e) for e in ids])])
-
-        return self
-
-    def remove_books(self, books: List[BookMetadata]):
-        return self.remove_from_ids(ids=[e.id for e in books])
+        return TypeAdapter(List[ExternalBookMetadata]).validate_python(json.loads(res))

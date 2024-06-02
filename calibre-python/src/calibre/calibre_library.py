@@ -5,8 +5,7 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import List
 
-from calibre.objects import BookMetadata
-from calibre.search_params import SearchParams
+from calibre.objects import ExternalBookMetadata
 
 
 class AbstractCalibreLibrary:
@@ -28,7 +27,7 @@ class AbstractCalibreLibrary:
         return self.__class__(new_library_path)
 
     @abstractmethod
-    def list_books(self, params: SearchParams = SearchParams()) -> List[BookMetadata]:
+    def list_books(self) -> List[ExternalBookMetadata]:
         raise NotImplementedError
 
     @abstractmethod

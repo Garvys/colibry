@@ -21,7 +21,9 @@ def library_calibredb(ebook_paths: List[Path]):
 
     tmp = TemporaryDirectory()
 
-    db = CalibreDB.new_empty_library(Path(tmp.name) / "library").add(ebooks=ebook_paths)
+    db = CalibreDB.new_empty_library(Path(tmp.name) / "library").add_books(
+        ebooks=ebook_paths
+    )
     # Attach tmp so that it gets removed when the db is destroyed
     db.tmp = tmp
     return db

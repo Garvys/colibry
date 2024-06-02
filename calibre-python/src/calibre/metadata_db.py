@@ -66,6 +66,7 @@ class BookAggregatedMetadata(StrictBaseModel):
     title: str
     authors: Optional[str]
     timestamp: datetime
+    pubdate: datetime
     series: Optional[str]
     series_index: int
     sort: str
@@ -385,6 +386,7 @@ class MetadataDB:
                 "path",
                 "isbn",
                 "lccn",
+                "pubdate",
             ],
             parser=lambda x: BookAggregatedMetadata(
                 id=x[0],
@@ -398,6 +400,7 @@ class MetadataDB:
                 path=x[8],
                 isbn=x[9],
                 lccn=x[10],
+                pubdate=x[11],
             ),
         )
 

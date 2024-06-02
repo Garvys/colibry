@@ -2,19 +2,13 @@ from pathlib import Path
 from typing import List
 
 from calibre.calibre_library import AbstractCalibreLibrary
-from calibre.objects import (
-    BookMetadata,
-    InternalCalibreField,
-    InternalBookMetadata,
-)
-from calibre.search_params import SearchParams
-from calibre.converters import (
-    book_metadata_internal_to_external,
-    calibre_field_external_to_internals,
-)
+from calibre.objects import ExternalBookMetadata
+
 from calibre.metadata_db import MetadataDB
 import sqlite3
 import epub
+
+COVER_FILENAME = "cover.jpg"
 
 
 class CalibreSql(AbstractCalibreLibrary):
@@ -30,54 +24,35 @@ class CalibreSql(AbstractCalibreLibrary):
 
         print(res.fetchall())
 
-    def list_books(self, params: SearchParams = SearchParams()) -> List[BookMetadata]:
-        cur = self.connection.cursor()
-        fields = params.fields
+    def list_books(self) -> List[ExternalBookMetadata]:
+        book_aggregated_metadatas = self.metadata_db.list_books_from_meta_table()
 
-        # Turn the list of public fields to the list of internal ones
-        internal_fields = [InternalCalibreField.id, InternalCalibreField.title]
-        for field in fields:
-            internal_fields.extend(calibre_field_external_to_internals(field))
+        library_abs_path = self.library_path.absolute()
 
-        # Remove potential duplicates
-        internal_fields = list(set(internal_fields))
+        res = []
+        for b in book_aggregated_metadatas:
+            # TODO: There is a field has_cover in the metadata.db that we could leverage here
+            cover_path = library_abs_path / b.path / COVER_FILENAME
+            cover = None
+            if cover_path.exists():
+                cover = cover_path
 
-        query = "SELECT "
-        first = True
-        for internal_field in internal_fields:
-            if first:
-                query += f" {internal_field.value}"
-                first = False
-            else:
-                query += f", {internal_field.value}"
-
-        query += " FROM meta"
-
-        if params.filters:
-            for filter in params.filters:
-                query += f" WHERE {filter.to_sql_filter()}"
-
-        query += " ORDER BY id"
-
-        res = cur.execute(query)
-        res = res.fetchall()
-
-        res_parsed = []
-        for row in res:
-            data = {}
-            for idx, field in enumerate(internal_fields):
-                data[field.value] = row[idx]
-            internal_book_metadata = InternalBookMetadata.model_validate(data)
-
-            book_metadata = book_metadata_internal_to_external(
-                internal=internal_book_metadata,
-                library_path=self.library_path,
-                fields=fields,
+            res.append(
+                ExternalBookMetadata(
+                    id=b.id,
+                    title=b.title,
+                    authors=b.authors,
+                    series=b.series,
+                    series_index=b.series_index,
+                    isbn=b.isbn,
+                    author_sort=b.author_sort,
+                    timestamp=b.timestamp,
+                    pubdate=b.pubdate,
+                    cover=cover,
+                )
             )
 
-            res_parsed.append(book_metadata)
-
-        return res_parsed
+        return res
 
     def add_book(self, ebook_path: Path):
         import epub
