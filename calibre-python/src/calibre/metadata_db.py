@@ -88,6 +88,7 @@ class BookStructuredMetadata(StrictBaseModel):
     book: BookMetadata
     authors: List[AuthorMetadata]
     serie: Optional[SerieMetadata]
+    data: List[DataMetadata]
 
     def copy_and_override_datetimes(self, dt_override: datetime) -> "BookMetadata":
         book_overriden = self.book.copy_and_override_datetimes(dt_override)
@@ -451,7 +452,7 @@ class MetadataDB:
                 for book_author_link in book_author_links
             ]
 
-            # Need to find all the series attached to that book
+            # Need to find the serie attached to that book
             book_series_links = self.list_book_series_link(
                 book_id=book_metadata.id, limit=1
             )
@@ -462,8 +463,16 @@ class MetadataDB:
                     serie_id=book_series_links[0].serie_id
                 )[0]
 
+            # Need to find the available files for that book
+            format_metadatas = self.list_data_table(book_id=book_metadata.id)
+
             res.append(
-                BookStructuredMetadata(book=book_metadata, authors=authors, serie=serie)
+                BookStructuredMetadata(
+                    book=book_metadata,
+                    authors=authors,
+                    serie=serie,
+                    data=format_metadatas,
+                )
             )
 
         return res

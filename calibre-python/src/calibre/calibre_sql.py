@@ -41,6 +41,19 @@ class CalibreSql(AbstractCalibreLibrary):
                         f"Book is said to have a cover and it doesn't exist: {cover}"
                     )
 
+            size = 0
+            formats = []
+            for d in b.data:
+                file_path = (
+                    library_abs_path / b.book.path / f"{d.name}.{d.format.lower()}"
+                )
+
+                if not file_path.exists():
+                    raise RuntimeError(f"File is missing : {file_path}")
+
+                formats.append(file_path)
+                size = max(size, d.uncompressed_size)
+
             res.append(
                 ExternalBookMetadata(
                     id=b.book.id,
@@ -53,7 +66,9 @@ class CalibreSql(AbstractCalibreLibrary):
                     timestamp=b.book.timestamp,
                     pubdate=b.book.pubdate,
                     cover=cover,
-                    formats=[],
+                    formats=formats,
+                    last_modified=b.book.last_modified,
+                    size=size,
                 )
             )
 

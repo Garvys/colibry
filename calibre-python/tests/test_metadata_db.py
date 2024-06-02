@@ -246,7 +246,7 @@ def test_books_structured(tmp_path):
 
     assert db.list_books_structured() == []
 
-    db.add_book(title="Silo", authors=[("Hugh Howey", "hugh,howey")])
+    id_silo = db.add_book(title="Silo", authors=[("Hugh Howey", "hugh,howey")])
     db.add_book(
         title="Silo Origins",
         authors=[("Hugh Howey", "hugh,howey")],
@@ -265,6 +265,10 @@ def test_books_structured(tmp_path):
         series_index=3,
     )
 
+    db.add_to_data_table(
+        book_id=id_silo, format="PDF", uncompressed_size=50, name="Lol"
+    )
+
     assert len(db.list_authors_from_authors_table()) == 1
     assert len(db.list_series_from_series_table()) == 1
 
@@ -276,6 +280,15 @@ def test_books_structured(tmp_path):
             book=BookMetadata(id=2, title="Silo", sort="Silo"),
             authors=[AuthorMetadata(id=1, name="Hugh Howey", sort="hugh,howey")],
             serie=None,
+            data=[
+                DataMetadata(
+                    id=1,
+                    book_id=id_silo,
+                    format="PDF",
+                    uncompressed_size=50,
+                    name="Lol",
+                )
+            ],
         ).copy_and_override_datetimes(now),
         BookStructuredMetadata(
             book=BookMetadata(
@@ -291,6 +304,7 @@ def test_books_structured(tmp_path):
             ),
             authors=[AuthorMetadata(id=1, name="Hugh Howey", sort="hugh,howey")],
             serie=SerieMetadata(id=1, name="silo", sort="silo"),
+            data=[],
         ).copy_and_override_datetimes(now),
         BookStructuredMetadata(
             book=BookMetadata(
@@ -298,6 +312,7 @@ def test_books_structured(tmp_path):
             ),
             authors=[AuthorMetadata(id=1, name="Hugh Howey", sort="hugh,howey")],
             serie=SerieMetadata(id=1, name="silo", sort="silo"),
+            data=[],
         ).copy_and_override_datetimes(now),
     ]
 
@@ -313,38 +328,38 @@ def test_data_table(tmp_path):
     )
 
     db.add_to_data_table(
-        book_id=id_silo, format="EPUB", uncompressed_size=100, name="Lol.epub"
+        book_id=id_silo, format="EPUB", uncompressed_size=100, name="Lol"
     )
     db.add_to_data_table(
-        book_id=id_silo, format="PDF", uncompressed_size=50, name="Lol.pdf"
+        book_id=id_silo, format="PDF", uncompressed_size=50, name="Lol"
     )
     db.add_to_data_table(
-        book_id=id_silo_origins, format="PDF", uncompressed_size=50, name="Lol.pdf"
+        book_id=id_silo_origins, format="PDF", uncompressed_size=50, name="Lol"
     )
 
     res = db.list_data_table()
     assert res == [
         DataMetadata(
-            id=1, book_id=id_silo, format="EPUB", uncompressed_size=100, name="Lol.epub"
+            id=1, book_id=id_silo, format="EPUB", uncompressed_size=100, name="Lol"
         ),
         DataMetadata(
-            id=2, book_id=id_silo, format="PDF", uncompressed_size=50, name="Lol.pdf"
+            id=2, book_id=id_silo, format="PDF", uncompressed_size=50, name="Lol"
         ),
         DataMetadata(
             id=3,
             book_id=id_silo_origins,
             format="PDF",
             uncompressed_size=50,
-            name="Lol.pdf",
+            name="Lol",
         ),
     ]
 
     res = db.list_data_table(book_id=id_silo)
     assert res == [
         DataMetadata(
-            id=1, book_id=id_silo, format="EPUB", uncompressed_size=100, name="Lol.epub"
+            id=1, book_id=id_silo, format="EPUB", uncompressed_size=100, name="Lol"
         ),
         DataMetadata(
-            id=2, book_id=id_silo, format="PDF", uncompressed_size=50, name="Lol.pdf"
+            id=2, book_id=id_silo, format="PDF", uncompressed_size=50, name="Lol"
         ),
     ]

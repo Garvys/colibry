@@ -17,9 +17,14 @@ class ExternalBookMetadata(BaseModel):
     timestamp: datetime
     cover: Optional[Path]
     formats: List[Path]
+    last_modified: datetime
+    size: int
 
     model_config = ConfigDict(extra="forbid")
 
     def model_copy_and_remove_microseconds(self) -> "ExternalBookMetadata":
         timestamp = self.timestamp.replace(microsecond=0)
-        return self.model_copy(update={"timestamp": timestamp})
+        last_modified = self.last_modified.replace(microsecond=0)
+        return self.model_copy(
+            update={"timestamp": timestamp, "last_modified": last_modified}
+        )
