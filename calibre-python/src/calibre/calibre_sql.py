@@ -1,74 +1,24 @@
 from pathlib import Path
 from typing import List
 
-from calibre.calibre_library import CalibreLibrary
-from calibre.objects import (
-    BookMetadata,
-    InternalCalibreField,
-    InternalBookMetadata,
-)
-from calibre.search_params import SearchParams
-from calibre.converters import (
-    book_metadata_internal_to_external,
-    calibre_field_external_to_internals,
-)
+from calibre.calibre_library import AbstractCalibreLibrary
+from calibre.objects import ExternalBookMetadata
+
+from calibre.metadata_db import MetadataDB
 import sqlite3
+import epub
+import shutil
+import os
+from unidecode import unidecode
+
+COVER_FILENAME = "cover.jpg"
 
 
-class Concatenate:
-    """String concatenation aggregator for sqlite"""
-
-    def __init__(self, sep=","):
-        self.sep = sep
-        self.ans = []
-
-    def step(self, value):
-        if value is not None:
-            self.ans.append(value)
-
-    def finalize(self):
-        try:
-            if not self.ans:
-                return None
-            return self.sep.join(self.ans)
-        except Exception:
-            import traceback
-
-            traceback.print_exc()
-            raise
-
-
-class SortedConcatenate:
-    """String concatenation aggregator for sqlite, sorted by supplied index"""
-
-    sep = " & "
-
-    def __init__(self):
-        self.ans = {}
-
-    def step(self, ndx, value):
-        if value is not None:
-            self.ans[ndx] = value
-
-    def finalize(self):
-        try:
-            if len(self.ans) == 0:
-                return None
-            return self.sep.join(map(self.ans.get, sorted(self.ans.keys())))
-        except Exception:
-            import traceback
-
-            traceback.print_exc()
-            raise
-
-
-class CalibreSql(CalibreLibrary):
+class CalibreSql(AbstractCalibreLibrary):
     def __init__(self, library_path: Path):
         super().__init__(library_path=library_path)
 
-        self.connection = sqlite3.connect(self.library_path / "metadata.db")
-        self.connection.create_aggregate("sortconcat", 2, SortedConcatenate)
-        self.connection.create_aggregate("concat", 1, Concatenate)
+        self.metadata_db = MetadataDB(self.library_path / "metadata.db")
 
     def _list_all_tables(self):
         cursor = self.connection.cursor()
@@ -77,51 +27,105 @@ class CalibreSql(CalibreLibrary):
 
         print(res.fetchall())
 
-    def list_books(self, params: SearchParams = SearchParams()) -> List[BookMetadata]:
-        cur = self.connection.cursor()
-        fields = params.fields
+    def list_books(self) -> List[ExternalBookMetadata]:
+        book_structured_metadatas = self.metadata_db.list_books_structured()
 
-        # Turn the list of public fields to the list of internal ones
-        internal_fields = [InternalCalibreField.id, InternalCalibreField.title]
-        for field in fields:
-            internal_fields.extend(calibre_field_external_to_internals(field))
+        library_abs_path = self.library_path.absolute()
 
-        # Remove potential duplicates
-        internal_fields = list(set(internal_fields))
+        res = []
+        for b in book_structured_metadatas:
+            authors = " & ".join([a.name for a in b.authors])
 
-        query = "SELECT "
-        first = True
-        for internal_field in internal_fields:
-            if first:
-                query += f" {internal_field.value}"
-                first = False
-            else:
-                query += f", {internal_field.value}"
+            cover = None
+            if b.book.has_cover:
+                cover = library_abs_path / b.book.path / COVER_FILENAME
+                if not cover.exists():
+                    raise RuntimeError(
+                        f"Book is said to have a cover and it doesn't exist: {cover}"
+                    )
 
-        query += " FROM meta"
+            size = 0
+            formats = []
+            for d in b.data:
+                if not b.book.path:
+                    raise RuntimeError(f"Data provided without path for book : {b}")
 
-        if params.filters:
-            for filter in params.filters:
-                query += f" WHERE {filter.to_sql_filter()}"
+                file_path = (
+                    library_abs_path / b.book.path / f"{d.name}.{d.format.lower()}"
+                )
 
-        query += " ORDER BY id"
+                if not file_path.exists():
+                    raise RuntimeError(f"File is missing : {file_path}")
 
-        res = cur.execute(query)
-        res = res.fetchall()
+                formats.append(file_path)
+                size = max(size, d.uncompressed_size)
 
-        res_parsed = []
-        for row in res:
-            data = {}
-            for idx, field in enumerate(internal_fields):
-                data[field.value] = row[idx]
-            internal_book_metadata = InternalBookMetadata.model_validate(data)
-
-            book_metadata = book_metadata_internal_to_external(
-                internal=internal_book_metadata,
-                library_path=self.library_path,
-                fields=fields,
+            res.append(
+                ExternalBookMetadata(
+                    id=b.book.id,
+                    title=b.book.title,
+                    authors=authors,
+                    series=b.serie.name if b.serie is not None else None,
+                    series_index=b.book.series_index,
+                    isbn=b.book.isbn,
+                    author_sort=b.book.author_sort,
+                    timestamp=b.book.timestamp,
+                    pubdate=b.book.pubdate,
+                    cover=cover,
+                    formats=formats,
+                    last_modified=b.book.last_modified,
+                    size=size,
+                )
             )
 
-            res_parsed.append(book_metadata)
+        return res
 
-        return res_parsed
+    def add_book(self, ebook_path: Path):
+
+        if not ebook_path.exists():
+            raise RuntimeError(f"Can't add an ebook if it doesn't exist : {ebook_path}")
+
+        book = epub.open_epub(ebook_path)
+        title = ""
+        titles = book.opf.metadata.titles
+        if titles:
+            title = titles[0][0]
+
+        authors = []
+        for c in book.opf.metadata.creators:
+            name = c[0]
+            sort = c[2]
+            authors.append((name, sort))
+
+        # Add metadata for book
+        book_id = self.metadata_db.add_book(title=title, authors=authors)
+
+        # Create folders
+        author_folder = self.library_path / unidecode(authors[0][0])
+        author_folder.mkdir(exist_ok=True)
+
+        book_folder = author_folder / f"{title} ({book_id})"
+        book_folder.mkdir()
+
+        # Copy ebook
+        book_filename = unidecode(f"{title} - {authors[0][0]}")
+        shutil.copy(ebook_path, book_folder / f"{book_filename}.epub")
+
+        with (book_folder / "metadata.opf").open(mode="w") as f:
+            book.opf.metadata.as_xml_element().writexml(f)
+
+        # Add ebook info to data table
+        self.metadata_db.add_to_data_table(
+            book_id=book_id,
+            format="epub",
+            name=book_filename,
+            uncompressed_size=os.stat(ebook_path).st_size,
+        )
+
+        # Update path
+        self.metadata_db.update_book_table(book_id=book_id, path=str(book_folder))
+
+    def add_books(self, ebooks: List[Path]):
+        for ebook in ebooks:
+            self.add_book(ebook)
+        return self
