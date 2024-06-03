@@ -360,6 +360,11 @@ class MetadataDB:
             ),
         )
 
+    def update_book_table(self, book_id: int, path: str):
+        self._update_table(
+            table_name=TableName.books, id=book_id, fields=["path"], values=[path]
+        )
+
     # Returns the BOOK ID of the inserted book
     def add_book_to_books_table(
         self,

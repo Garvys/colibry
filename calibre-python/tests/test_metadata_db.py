@@ -208,6 +208,44 @@ def test_books(tmp_path):
         ),
     ]
 
+    db.update_book_table(book_id=3, path="mypath-updated")
+
+    res = db.lists_books_from_books_table()
+    res = [
+        r.model_copy(update={"timestamp": now, "pubdate": now, "last_modified": now})
+        for r in res
+    ]
+    assert res == [
+        BookMetadata(
+            id=2,
+            title="B1",
+            sort="B1",
+            series_index=1,
+            author_sort=None,
+            path="",
+            has_cover=False,
+            timestamp=now,
+            pubdate=now,
+            last_modified=now,
+            isbn="",
+            lccn="",
+        ),
+        BookMetadata(
+            id=3,
+            title="B2",
+            sort="B2",
+            series_index=3,
+            author_sort="pouet",
+            path="mypath-updated",
+            has_cover=True,
+            timestamp=now,
+            pubdate=now,
+            last_modified=now,
+            isbn="isbn",
+            lccn="lccn",
+        ),
+    ]
+
 
 def test_meta(tmp_path):
     db = MetadataDB.new_empty_db(tmp_path / "db")

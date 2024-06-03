@@ -9,7 +9,7 @@ class ExternalBookMetadata(BaseModel):
     id: int
     title: str
     authors: str
-    author_sort: str
+    author_sort: Optional[str]
     series: Optional[str] = None
     series_index: int
     isbn: str

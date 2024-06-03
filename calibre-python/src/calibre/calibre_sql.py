@@ -7,6 +7,9 @@ from calibre.objects import ExternalBookMetadata
 from calibre.metadata_db import MetadataDB
 import sqlite3
 import epub
+import shutil
+import os
+from unidecode import unidecode
 
 COVER_FILENAME = "cover.jpg"
 
@@ -44,6 +47,9 @@ class CalibreSql(AbstractCalibreLibrary):
             size = 0
             formats = []
             for d in b.data:
+                if not b.book.path:
+                    raise RuntimeError(f"Data provided without path for book : {b}")
+
                 file_path = (
                     library_abs_path / b.book.path / f"{d.name}.{d.format.lower()}"
                 )
@@ -75,14 +81,49 @@ class CalibreSql(AbstractCalibreLibrary):
         return res
 
     def add_book(self, ebook_path: Path):
-        import epub
 
         if not ebook_path.exists():
             raise RuntimeError(f"Can't add an ebook if it doesn't exist : {ebook_path}")
 
         book = epub.open_epub(ebook_path)
-        print(book.opf.metadata.titles)
-        print(book.opf.metadata.creators)
+        title = ""
+        titles = book.opf.metadata.titles
+        if titles:
+            title = titles[0][0]
+
+        authors = []
+        for c in book.opf.metadata.creators:
+            name = c[0]
+            sort = c[2]
+            authors.append((name, sort))
+
+        # Add metadata for book
+        book_id = self.metadata_db.add_book(title=title, authors=authors)
+
+        # Create folders
+        author_folder = self.library_path / unidecode(authors[0][0])
+        author_folder.mkdir(exist_ok=True)
+
+        book_folder = author_folder / f"{title} ({book_id})"
+        book_folder.mkdir()
+
+        # Copy ebook
+        book_filename = unidecode(f"{title} - {authors[0][0]}")
+        shutil.copy(ebook_path, book_folder / f"{book_filename}.epub")
+
+        with (book_folder / "metadata.opf").open(mode="w") as f:
+            book.opf.metadata.as_xml_element().writexml(f)
+
+        # Add ebook info to data table
+        self.metadata_db.add_to_data_table(
+            book_id=book_id,
+            format="epub",
+            name=book_filename,
+            uncompressed_size=os.stat(ebook_path).st_size,
+        )
+
+        # Update path
+        self.metadata_db.update_book_table(book_id=book_id, path=str(book_folder))
 
     def add_books(self, ebooks: List[Path]):
         for ebook in ebooks:
